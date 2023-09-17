@@ -3,18 +3,18 @@ import XCTest
 
 final class MathNodeTest: XCTestCase {
     func testNodeBuilding() throws {
-		let node = Node(InfixNode(priority: 10, reducer: +), children: [
+		let node = Node(InfixNode(priority: 10, reducer: +), children: .init([
 			Node(NumberNode(2)),
-			Node(InfixNode(priority: 40, reducer: *), children: [
+			Node(InfixNode(priority: 40, reducer: *), children: .init([
 				Node(NumberNode(3)),
 				Node(NumberNode(5))
-			])
-		])
+			]))
+		]))
 
-		XCTAssertEqual(node.children.count, 2, "Init with children")
-		XCTAssert(node.children[0].body is NumberNode, "Correct children assignment")
-		XCTAssertIdentical(node.children[0].parent, node, "Parent assignment")
-		XCTAssertIdentical(node.children[1].children[0].root, node, "Root Property")
+		XCTAssertEqual(node.childrenList.count, 2, "Init with children")
+		XCTAssert(node.childrenList[0].body is NumberNode, "Correct children assignment")
+		XCTAssertIdentical(node.childrenList[0].parent, node, "Parent assignment")
+		XCTAssertIdentical(node.childrenList[1].childrenList[0].root, node, "Root Property")
     }
 
 	func testEvaluation() throws {

@@ -5,27 +5,25 @@ public protocol Evaluable {
 	func evaluate(args: Arguments) -> MathResult
 }
 
-public protocol ArgContainer {
-	typealias ArgKey = WritableKeyPath<Self, Argument>
-	typealias ArgListKey = WritableKeyPath<Self, [Argument]>
 
-	var prefix: ArgKey? { get }
-	var arguments: [ArgKey] { get }
-	var rest: ArgListKey? { get }
+struct IntegralNode {
+	@Argument var lowerBound: AnyNode
+	@Argument var upperBound: AnyNode
+	@Argument var expression: AnyNode
 
-	init()
+	public var arguments: [ArgumentKey] { [\.lowerBound, \.upperBound, \.expression] }
+
+	func evaluate() -> MathResult {
+		let lower = lowerBound.evaluate()
+		let upper = upperBound.evaluate()
+
+
+		var acc = 0.0
+		for v in lower..upper {
+			acc += expression.evaluate()
+		}
+
+		return .success(.number(acc))
+	}
 }
 
-public extension ArgContainer {
-	var prefix: ArgKey? { nil }
-	var rest: ArgListKey? { nil }
-
-	var hasPrefix: Bool { prefix != nil }
-	var hasRest: Bool { rest != nil }
-}
-
-public struct EmptyArguments: ArgContainer {
-	public var arguments: [ArgKey] { [] }
-
-	public init() {}
-}

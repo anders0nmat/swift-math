@@ -1,6 +1,12 @@
 
 public struct InfixNode: Evaluable {
 	public typealias Reducer = (MathFloat, MathFloat) -> MathFloat
+	public struct Arguments: ArgContainer {
+		public var parts: [Argument] = []
+
+		public var rest: ArgListKey? { \.parts }
+		public var arguments: [ArgKey] { [] }
+	}
 
 	public internal(set) var priority: UInt
 	internal var reducer: Reducer
@@ -10,11 +16,11 @@ public struct InfixNode: Evaluable {
 		self.reducer = reducer
 	}
 
-	public func evaluate(node: Node) -> MathResult {
+	public func evaluate(args: Arguments) -> MathResult {
 		var numbers: [MathFloat] = []
 
-		for child in node.children {
-			switch child.evaluate() {
+		for child in args.parts {
+			switch child.wrappedValue.evaluate() {
 				case .success(let value):
 					switch value {
 						case .number(let number): numbers.append(number)

@@ -4,6 +4,8 @@ public protocol _Node: AnyObject {
 	var childrenList: [AnyNode] { get }
 
 	var root: AnyNode { get }
+
+	func evaluate() -> MathResult
 }
 
 public typealias AnyNode = any _Node
@@ -20,9 +22,13 @@ public final class Node<Body: Evaluable>: _Node {
 	public internal(set) var body: Body
 	public internal(set) var children: Body.Arguments
 
-	public init(_ body: Body) {
+	public convenience init(_ body: Body) where Body.Arguments == EmptyArguments {
+		self.init(body, children: EmptyArguments())
+	}
+
+	public init(_ body: Body, children: Body.Arguments) {
 		self.body = body
-		self.children = Body.Arguments()
+		self.children = children
 	}
 
 	public func evaluate() -> MathResult {
