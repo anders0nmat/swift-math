@@ -13,3 +13,5 @@ public struct Argument {
 	}
 }
 
+public typealias ArgumentKey<T> = WritableKeyPath<T, Argument>
+
