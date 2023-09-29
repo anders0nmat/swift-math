@@ -1,30 +1,30 @@
 
 public struct InfixNode: Evaluable {
 	public typealias Reducer = (MathFloat, MathFloat) -> MathFloat
-	public struct Arguments: ArgContainer {
-		public var parts: [Argument] = []
-
-		public var rest: ArgListKey? { \.parts }
-		public var arguments: [ArgKey] { [] }
-	}
+	
 
 	public internal(set) var priority: UInt
 	internal var reducer: Reducer
 
-	public init(priority: UInt, reducer: @escaping Reducer) {
+	@ArgumentList var parts: [AnyNode]
+
+	public var restPath: ArgumentListKey<InfixNode>? { \.$parts }
+
+	public init(priority: UInt, reducer: @escaping Reducer, children: [AnyNode]) {
 		self.priority = priority
 		self.reducer = reducer
+		self.parts = children
 	}
 
-	public func evaluate(args: Arguments) -> MathResult {
+	public func evaluate() -> MathResult {
 		var numbers: [MathFloat] = []
 
-		for child in args.parts {
-			switch child.wrappedValue.evaluate() {
+		for child in parts {
+			switch child.evaluate() {
 				case .success(let value):
 					switch value {
 						case .number(let number): numbers.append(number)
-						default: return .failure(.argumentType()) 
+						default: return .failure(.genericError(message: "Non-matching type")) 
 					}
 				case .failure(let error): return .failure(error)
 			}

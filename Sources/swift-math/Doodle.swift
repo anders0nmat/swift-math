@@ -10,8 +10,8 @@ struct IntegralNode: Evaluable {
 		let lower = lowerBound.evaluate()
 		let upper = upperBound.evaluate()
 
-		guard case let .success(.number(lowerValue)) = lower else { return .failure(.argumentType()) }
-		guard case let .success(.number(upperValue)) = upper else { return .failure(.argumentType()) }
+		guard case let .success(.number(lowerValue)) = lower else { return .failure(.genericError()) }
+		guard case let .success(.number(upperValue)) = upper else { return .failure(.genericError()) }
 
 		var acc = 0.0
 		for _ in Int(lowerValue)...Int(upperValue) {
@@ -19,7 +19,7 @@ struct IntegralNode: Evaluable {
 				case .success(let val):
 					switch val {
 						case .number(let val): acc += val
-						default: return .failure(.argumentType())
+						default: return .failure(.genericError())
 					}
 				case let a: return a
 			}

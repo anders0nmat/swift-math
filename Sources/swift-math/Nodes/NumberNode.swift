@@ -6,7 +6,7 @@ public struct NumberNode: Evaluable {
 		self.value = value
 	}
 
-	public func evaluate(args: EmptyArguments) -> MathResult {
+	public func evaluate() -> MathResult {
 		.success(.number(value))
 	}
 }
