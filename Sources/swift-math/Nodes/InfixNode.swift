@@ -1,5 +1,5 @@
 
-public struct InfixNode: Evaluable {
+public struct InfixNode: PriorityEvaluable {
 	public typealias Reducer = (MathFloat, MathFloat) -> MathFloat
 	
 
