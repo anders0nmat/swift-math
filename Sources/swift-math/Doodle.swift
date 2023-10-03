@@ -1,4 +1,5 @@
 
+/*
 struct IntegralNode: Evaluable {
 	@Argument var lowerBound: AnyNode
 	@Argument var upperBound: AnyNode
@@ -27,5 +28,4 @@ struct IntegralNode: Evaluable {
 
 		return .success(.number(acc))
 	}
-}
-
+}*/

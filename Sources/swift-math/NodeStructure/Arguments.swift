@@ -1,7 +1,14 @@
 
+public typealias ArgumentKey<T> = WritableKeyPath<T, Argument>
+public typealias ArgumentListKey<T> = WritableKeyPath<T, ArgumentList>
+
 @propertyWrapper
 public struct Argument {
 	public var wrappedValue: AnyNode
+	public var node: AnyNode {
+		get { wrappedValue }
+		set { wrappedValue = newValue }
+	}
 
 	public var projectedValue: Argument { 
 		get { self }
@@ -16,6 +23,10 @@ public struct Argument {
 @propertyWrapper
 public struct ArgumentList {
 	public var wrappedValue: [AnyNode]
+	public var nodeList: [AnyNode] {
+		get { wrappedValue }
+		set { wrappedValue = newValue }
+	}
 
 	public var projectedValue: ArgumentList {
 		get { self }
@@ -27,6 +38,7 @@ public struct ArgumentList {
 	}
 }
 
-public typealias ArgumentKey<T> = WritableKeyPath<T, Argument>
-public typealias ArgumentListKey<T> = WritableKeyPath<T, ArgumentList>
 
+struct Value {
+	var value: Int
+}

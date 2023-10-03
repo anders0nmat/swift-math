@@ -1,12 +1,12 @@
 
 public struct MathError: Error {
-	public enum MathMessage {
+	public enum Message {
 		case evalError(message: String)
 
 		case genericError(message: String?)
 	}
 
-	var message: MathMessage
+	var message: Message
 	var origin: AnyNode?
 
 	func withOrigin(_ node: AnyNode?) -> Self {
@@ -32,4 +32,4 @@ extension MathError: Equatable {
     }
 }
 
-extension MathError.MathMessage: Equatable {}
+extension MathError.Message: Equatable {}
