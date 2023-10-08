@@ -42,3 +42,23 @@ final class MathNodeTest: XCTestCase {
 		XCTAssertEqual(node.evaluate(), .failure(.evalError(message: "Missing Argument").withOrigin(erroringNode)))
 	}
 }
+
+final class ParserTest: XCTestCase {
+    func testSimpleInfix() throws {
+		let parser = TokenParser(operators: [
+			"+": InfixNode(priority: 10, reducer: +, children: [])
+		])
+
+		XCTAssertEqual(parser.parse(token: "#number", args: ["4"]), .success)
+		XCTAssertEqual(parser.parse(token: "+"), .success)
+		XCTAssertEqual(parser.parse(token: "#number", args: ["5"]), .success)
+
+		XCTAssertEqual(parser.root.evaluate(), .success(.number(9)))
+		print("========== ROOT ==========")
+		print(parser.root)
+		print("========== CURRENT ==========")
+		print(parser.current as Any)
+    }
+}
+
+

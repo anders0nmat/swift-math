@@ -15,7 +15,7 @@ public struct Argument {
 		set { self = newValue }
 	}
 
-	public init(wrappedValue: AnyNode) {
+	public init(wrappedValue: AnyNode = Node.empty()) {
 		self.wrappedValue = wrappedValue
 	}
 }

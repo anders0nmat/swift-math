@@ -12,11 +12,16 @@ public protocol Evaluable {
 	var restPath: ArgumentListKey<Self>? { get }
 
 	/*
+	Generic display name
+	*/
+	var displayName: String { get }
+
+	/*
 	Initialization for individual nodes.
 	Required if you want something per-node initialized.
 	Example: variable names, constant expression names
 	*/
-	mutating func customize(using arguments: [String]) -> Result<Void, ParseError>
+	mutating func customize(using arguments: [String]) -> Result<Nothing, ParseError>
 
 	/*
 	Function to call if evaluation is requested.
@@ -31,9 +36,15 @@ public extension Evaluable {
 	var restPath: ArgumentListKey<Self>? { nil }
 
 	var hasPrefix: Bool { self.prefixPath != nil }
+	var argCount: Int { self.argumentsPath.count }
 	var hasRest: Bool { self.restPath != nil }
 
-	mutating func customize(using arguments: [String]) -> Result<Void, ParseError> { .success }
+	var prefixArg: AnyNode? { hasPrefix ? self[keyPath: prefixPath!].node : nil }
+	var restArg: [AnyNode]? { hasRest ? self[keyPath: restPath!].nodeList : nil }
+
+	var displayName: String { String(describing: Self.self) }
+
+	mutating func customize(using arguments: [String]) -> Result<Nothing, ParseError> { .success }
 
 	var children: [AnyNode] {
 		get {

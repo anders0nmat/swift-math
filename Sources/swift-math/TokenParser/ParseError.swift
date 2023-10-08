@@ -3,6 +3,10 @@ public struct ParseError: Error {
     public enum Message {
         case contextError(message: String? = nil)
 
+		case unexpectedHead
+		case emptyHead
+		case noEmptyHead
+		case noHead
         case unknownToken
     }
 
@@ -12,9 +16,12 @@ public struct ParseError: Error {
 }
 
 extension ParseError {
-    static var unknownToken: ParseError {
-        .init(message: .unknownToken)
-    }
+    static var unknownToken: Self { .init(message: .unknownToken) }
+	static var noHead: Self       { .init(message: .noHead) }
+	static var emptyHead: Self    { .init(message: .emptyHead) }
+	static var unexpectedNode: Self { .init(message: .unexpectedHead) }
+
+	static func noEmptyHead(head: AnyNode) -> Self { .init(message: .noEmptyHead, currentHead: head) }
 }
 
 extension ParseError: Equatable {

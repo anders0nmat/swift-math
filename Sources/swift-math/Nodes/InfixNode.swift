@@ -4,15 +4,17 @@ public struct InfixNode: PriorityEvaluable {
 	
 
 	public internal(set) var priority: UInt
+	public internal(set) var displayName: String
 	internal var reducer: Reducer
 
 	@ArgumentList var parts: [AnyNode]
 
 	public var restPath: ArgumentListKey<InfixNode>? { \.$parts }
 
-	public init(priority: UInt, reducer: @escaping Reducer, children: [AnyNode]) {
+	public init(priority: UInt, reducer: @escaping Reducer, displayName: String, children: [AnyNode]) {
 		self.priority = priority
 		self.reducer = reducer
+		self.displayName = displayName
 		self.parts = children
 	}
 
