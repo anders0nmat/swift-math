@@ -67,7 +67,7 @@ public final class TokenParser {
 					return nextChild(of: children[children.index(after: idx)], from: .parent)
 				}
 				else {
-					if let restList = node.body.restArg {
+					if let restList = node.body.restArg, !(node.body is any PriorityEvaluable)  {
 						if child === restList.last, child is Node<EmptyNode> {
 							node.children.removeLast()
 						}
@@ -89,7 +89,7 @@ public final class TokenParser {
 		
 		switch origin {
 			case .here:
-				if node.body.hasRest {
+				if node.body.hasRest && !(node.body is any PriorityEvaluable) {
 					node.children.append(Node.empty())
 					return node.children.last!	
 				}
@@ -199,7 +199,7 @@ public final class TokenParser {
 		let opPrio = op.priority
 
 		// Travel up until parent is lower-prio or non-prio operation
-		while let currPrio = (current?.parent?.body as? any PriorityEvaluable)?.priority, currPrio > opPrio {
+		while let currPrio = (current?.parent?.body as? any PriorityEvaluable)?.priority, currPrio >= opPrio {
 			/* Force unwrap reasoning:
 			- currPrio succeeded
 			- Therefore cast to PriorityEvaluable succeeded
@@ -217,7 +217,7 @@ public final class TokenParser {
 			mergedOp.children.append(Node.empty())
 			let newNode = mergedOp.makeNode()
 			current.replaceSelf(with: newNode)
-			self.current = mergedOp.children.last 
+			self.current = mergedOp.children.last
 			return .success
 		}
 		else {
@@ -232,6 +232,7 @@ public final class TokenParser {
 	internal func processOperator(_ token: Token) -> ParseResult {
 		guard var op = operators[token.name] else { return .failure(.unknownToken) }
 		guard let current else { return .failure(.noHead) }
+		guard current !== root else { return .failure(.noHead) }
 
 		op.children = [] // Will reset children to EmptyNode
 		if case .failure(let error) = op.customize(using: token.args) {

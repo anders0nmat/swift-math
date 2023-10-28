@@ -11,6 +11,8 @@ public protocol Evaluable {
 	var argumentsPath: [ArgumentKey<Self>] { get }
 	var restPath: ArgumentListKey<Self>? { get }
 
+	var children: [AnyNode] { get set }
+
 	/*
 	Generic display name
 	*/

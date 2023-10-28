@@ -18,6 +18,16 @@ public struct InfixNode: PriorityEvaluable {
 		self.parts = children
 	}
 
+	public func merge(with other: any PriorityEvaluable) -> (any PriorityEvaluable)? {
+		guard let other = other as? InfixNode else { return nil }
+		guard other.priority == priority else { return nil }
+		guard other.displayName == displayName else { return nil }
+
+		var new = self
+		new.parts = other.parts + self.parts
+		return new
+	}
+
 	public func evaluate() -> MathResult {
 		var numbers: [MathFloat] = []
 
