@@ -19,10 +19,10 @@ public final class TokenParser {
 	}
 
 	internal func getHead(from node: AnyNode) -> AnyNode {
-		if node.body.argCount > 0 {
-			return node.children[node.body.hasPrefix ? 1 : 0]
+		if node.argumentCount > 0 {
+			return node.children[node.hasPrefix ? 1 : 0]
 		}
-		else if node.body.hasRest {
+		else if node.hasRest {
 			node.children.append(Node.empty())
 			return node.children.last!
 		}
@@ -44,41 +44,41 @@ public final class TokenParser {
 		let children = node.children
 		
 		switch origin {
-			case .here:
-				if let parent = node.parent {
-					return nextChild(of: parent, from: .child(node))
-				}
-				else {
-					return nextChild(of: node, from: .parent)
-				}
-			case .parent:
-				if let firstChild = children.first {
-					return nextChild(of: firstChild, from: .parent)
-				}
-				else if node.body.hasRest {
-					node.children.append(Node.empty())
-					return node.children.last!
-				}
-				else {
-					return node
-				}
-			case .child(let child):
-				if let idx = children.firstIndex(where: { $0 === child }), idx < children.index(before: children.endIndex) {
-					return nextChild(of: children[children.index(after: idx)], from: .parent)
-				}
-				else {
-					if let restList = node.body.restArg, !(node.body is any PriorityEvaluable)  {
-						if child === restList.last, child is Node<EmptyNode> {
-							node.children.removeLast()
-						}
-						else {
-							node.children.append(Node.empty())
-							return node.children.last!
-						}
+		case .here:
+			if let parent = node.parent {
+				return nextChild(of: parent, from: .child(node))
+			}
+			else {
+				return nextChild(of: node, from: .parent)
+			}
+		case .parent:
+			if let firstChild = children.first {
+				return nextChild(of: firstChild, from: .parent)
+			}
+			else if node.hasRest {
+				node.children.append(Node.empty())
+				return node.children.last!
+			}
+			else {
+				return node
+			}
+		case .child(let child):
+			if let idx = children.firstIndex(where: { $0 === child }), idx < children.index(before: children.endIndex) {
+				return nextChild(of: children[children.index(after: idx)], from: .parent)
+			}
+			else {
+				if let restList = node.restNodes, !node.hasPriority {
+					if child === restList.last, child is Node<EmptyNode> {
+						node.children.removeLast()
 					}
-
-					return node
+					else {
+						node.children.append(Node.empty())
+						return node.children.last!
+					}
 				}
+
+				return node
+			}
 		}
 
 	}
@@ -88,41 +88,40 @@ public final class TokenParser {
 		let children = node.children
 		
 		switch origin {
-			case .here:
-				if node.body.hasRest && !(node.body is any PriorityEvaluable) {
-					node.children.append(Node.empty())
-					return node.children.last!	
-				}
-				else if let lastChild = node.children.last {
-					return prevChild(of: lastChild, from: .parent)
-				}
-				else if let parent = node.parent {
-					return prevChild(of: parent, from: .child(node))
-				}
-				else {
-					return node
-				}
-			case .parent:
+		case .here:
+			if node.hasRest && !node.hasPriority {
+				node.children.append(Node.empty())
+				return node.children.last!	
+			}
+			else if let lastChild = node.children.last {
+				return prevChild(of: lastChild, from: .parent)
+			}
+			else if let parent = node.parent {
+				return prevChild(of: parent, from: .child(node))
+			}
+			else {
 				return node
-			case .child(let child):
-				if let idx = children.firstIndex(where: { $0 === child }), idx > children.startIndex {
-					if node.body.restArg?.last === child, child is Node<EmptyNode> {
-						node.children.removeLast()
-					}
-					return prevChild(of: children[children.index(before: idx)], from: .parent)
+			}
+		case .parent:
+			return node
+		case .child(let child):
+			if let idx = children.firstIndex(where: { $0 === child }), idx > children.startIndex {
+				if node.restNodes?.last === child, child is Node<EmptyNode> {
+					node.children.removeLast()
 				}
-				else if let parent = node.parent {
-					if let restList = node.body.restArg, child === restList.last, child is Node<EmptyNode> {
-						node.children.removeLast()
-					}
+				return prevChild(of: children[children.index(before: idx)], from: .parent)
+			}
+			else if let parent = node.parent {
+				if let restList = node.restNodes, child === restList.last, child is Node<EmptyNode> {
+					node.children.removeLast()
+				}
 
-					return prevChild(of: parent, from: .child(node))
-				}
-				else {
-					return prevChild(of: node, from: .parent)
-				}
+				return prevChild(of: parent, from: .child(node))
+			}
+			else {
+				return prevChild(of: node, from: .parent)
+			}
 		}
-
 	}
 
 	internal func advanceHead(current start: AnyNode) -> AnyNode {
@@ -135,7 +134,7 @@ public final class TokenParser {
 			if start !== parent.children.last {
 				return parent.children[parent.children.index(after: parent.children.firstIndex(where: {$0 === start})!)]
 			}
-			else if parent.body.hasRest && !(start is Node<EmptyNode>) {
+			else if parent.hasRest && !(start is Node<EmptyNode>) {
 				parent.children.append(Node.empty())
 				return parent.children.last!
 			}
@@ -147,12 +146,12 @@ public final class TokenParser {
 	}
 
 	internal func deadvanceHead(current start: AnyNode) -> AnyNode {
-		if start.body.children.isEmpty {
+		if start.children.isEmpty {
 			return start.parent ?? start
 		}
 		else {
 			// Can go one level deeper
-			if start.body.hasRest {
+			if start.hasRest {
 				start.children.append(Node.empty())
 			}
 			return start.children.last!
@@ -160,7 +159,7 @@ public final class TokenParser {
 	}
 
 	internal func processNumber(_ token: Token) -> ParseResult {
-		let decimalNumbers = "0123456789"
+		let decimalNumbers = Character("0")...Character("9")
 
 		guard let arg = token.args.first, token.args.count == 1 else {
 			return .failure(.unknownToken)
@@ -183,10 +182,10 @@ public final class TokenParser {
 				return .success
 			case let number as Node<NumberNode>:
 				switch arg {
-					case "+-": number.typedBody.negate()
-					case ".": number.typedBody.fraction()
-					case let num where num.allSatisfy {decimalNumbers.contains($0) }:
-						number.typedBody.append(number: num)
+					case "+-": number.body.negate()
+					case ".": number.body.fraction()
+					case let num where num.allSatisfy { decimalNumbers.contains($0) }:
+						number.body.append(number: num)
 					default: return .failure(.unknownToken)
 				}
 				return .success
@@ -199,10 +198,9 @@ public final class TokenParser {
 		let opPrio = op.priority
 
 		// Travel up until parent is lower-prio or non-prio operation
-		while let currPrio = (current?.parent?.body as? any PriorityEvaluable)?.priority, currPrio >= opPrio {
+		while let currPrio = current?.parent?.priority, currPrio >= opPrio {
 			/* Force unwrap reasoning:
 			- currPrio succeeded
-			- Therefore cast to PriorityEvaluable succeeded
 			- Therefore current must not be nil
 			*/
 			current = current!.parent
@@ -210,23 +208,23 @@ public final class TokenParser {
 
 		guard let current else { return .failure(.emptyHead) }
 
-		if 
-			let other = current.body as? any PriorityEvaluable, 
-			var mergedOp = op.merge(with: other) {
-
-			mergedOp.children.append(Node.empty())
-			let newNode = mergedOp.makeNode()
+		let newNode: AnyNode
+		if let other = current.body as? any PriorityEvaluable, 
+		let mergedOp = op.merge(with: other) {
+			newNode = mergedOp.makeNode()
 			current.replaceSelf(with: newNode)
-			self.current = mergedOp.children.last
-			return .success
+			newNode.children.append(Node.empty())
 		}
 		else {
-			let newNode = op.makeNode()
+			newNode = op.makeNode()
+			// The following two lines need to be in this order
+			// because assignment in line 2 sets current.parent = newNode
+			// which makes replaceSelf() impossible
 			current.replaceSelf(with: newNode)
 			newNode.children += [current, Node.empty()]
-			self.current = newNode.children.last
-			return .success
 		}
+		self.current = newNode.children.last
+		return .success
 	}
 
 	internal func processOperator(_ token: Token) -> ParseResult {
@@ -234,7 +232,7 @@ public final class TokenParser {
 		guard let current else { return .failure(.noHead) }
 		guard current !== root else { return .failure(.noHead) }
 
-		op.children = [] // Will reset children to EmptyNode
+		op.resetArguments()
 		if case .failure(let error) = op.customize(using: token.args) {
 			return .failure(error)
 		}
@@ -247,17 +245,16 @@ public final class TokenParser {
 			return processPriorityOperator(op)
 		}
 
-
 		// Fully copied op at this point
 		// Now insert...
+		let newNode = op.makeNode()
 
-		if op.hasPrefix {
+		if newNode.hasPrefix {
 			if current is Node<EmptyNode> {
 				// TODO: Allow prefix arguments to be empty?
 				return .failure(.emptyHead)
 			}
 			else {
-				let newNode = op.makeNode()
 				current.replaceSelf(with: newNode)
 				newNode.children[0] = current
 				self.current = getHead(from: newNode)
@@ -266,7 +263,6 @@ public final class TokenParser {
 		}
 		else {
 			if current is Node<EmptyNode> {
-				let newNode = op.makeNode()
 				current.replaceSelf(with: newNode)
 
 				self.current = getHead(from: newNode)
@@ -332,13 +328,3 @@ public final class TokenParser {
 	}
 }
 
-private extension String {
-	func asCharacter() -> Character? {
-		guard count == 1 else { return nil }
-		return Character(self)
-	}
-}
-
-private extension RandomAccessCollection {
-	var firstIndex: Index? { isEmpty ? nil : startIndex }
-}

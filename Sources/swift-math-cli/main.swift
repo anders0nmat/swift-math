@@ -25,7 +25,7 @@ func draw(node: AnyNode, current: AnyNode? = nil) -> String {
 			guard let node = $0 as? Node<NumberNode> else {
 				return drawGeneric(node: $0, current: current)
 			}
-			return node.typedBody.numberString
+			return node.body.numberString
 		},
 		ObjectIdentifier(ExpressionNode.self) : {
 			guard let node = $0 as? Node<ExpressionNode> else {
@@ -40,7 +40,7 @@ func draw(node: AnyNode, current: AnyNode? = nil) -> String {
 			guard let node = $0 as? Node<ConstantNode> else {
 				return drawGeneric(node: $0, current: current)
 			}
-			return node.typedBody.displayName
+			return node.body.displayName
 		}
 	]
 
@@ -68,7 +68,9 @@ let parser = TokenParser(operators: [
 	"exp": FunctionNode(displayName: "exp") { exp($0) },
 	"()": FunctionNode(displayName: "()") { $0 },
 	"pi": ConstantNode(.pi, displayName: "π"),
+	"list": ListNode(),
 ])
+let printer = NodePrinter()
 
 var lastResult = ""
 calcLoop: while true {
@@ -76,7 +78,7 @@ calcLoop: while true {
 	print("SwiftMath Calculator".styled([.bold]))
 	print("Exit with", ":q".colored(.cyan), "Help with", ":h".colored(.cyan))
 	print()
-	print("  " + draw(node: parser.root, current: parser.current))
+	print("  " + printer.prettyDraw(node: parser.root, current: parser.current))
 	switch parser.root.evaluate() {
 		case .success(.number(let val)):
 			print("  =", String(val).styled([.italic]))

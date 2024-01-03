@@ -11,8 +11,6 @@ public protocol Evaluable {
 	var argumentsPath: [ArgumentKey<Self>] { get }
 	var restPath: ArgumentListKey<Self>? { get }
 
-	var children: [AnyNode] { get set }
-
 	/*
 	Generic display name
 	*/
@@ -37,54 +35,23 @@ public extension Evaluable {
 	var argumentsPath: [ArgumentKey<Self>] { [] }
 	var restPath: ArgumentListKey<Self>? { nil }
 
-	var hasPrefix: Bool { self.prefixPath != nil }
-	var argCount: Int { self.argumentsPath.count }
-	var hasRest: Bool { self.restPath != nil }
-
-	var prefixArg: AnyNode? { hasPrefix ? self[keyPath: prefixPath!].node : nil }
-	var restArg: [AnyNode]? { hasRest ? self[keyPath: restPath!].nodeList : nil }
-
 	var displayName: String { String(describing: Self.self) }
 
 	mutating func customize(using arguments: [String]) -> Result<Nothing, ParseError> { .success }
 
-	var children: [AnyNode] {
-		get {
-			var result: [AnyNode] = []
-
-			if let prefixPath {
-				result += [self[keyPath: prefixPath].node]
-			}
-
-			result += argumentsPath.map { self[keyPath: $0].node }
-
-			if let restPath {
-				result += self[keyPath: restPath].nodeList
-			}
-
-			return result
+	mutating func resetArguments() {
+		if let prefixPath {
+			self[keyPath: prefixPath].node = Node.empty()
+		}
+		argumentsPath.forEach {
+			self[keyPath: $0].node = Node.empty()
 		}
 
-		set {
-			// Put new values in matching place and fill with EmptyNode if neccessary
-			var nodeIterator = newValue.makeIterator()
-
-			if let prefixPath {
-				self[keyPath: prefixPath].node = nodeIterator.next() ?? Node.empty()
-			}
-
-			argumentsPath.forEach {
-				self[keyPath: $0].node = nodeIterator.next() ?? Node.empty()
-			}
-
-			if let restPath {
-				self[keyPath: restPath].nodeList = Array(nodeIterator)
-			}
+		if let restPath {
+			self[keyPath: restPath].nodeList = []
 		}
 	}
-
-	func makeNode() -> AnyNode {
-		return Node(self)
-	}
+	
+	func makeNode() -> AnyNode { Node(self) }
 }
 

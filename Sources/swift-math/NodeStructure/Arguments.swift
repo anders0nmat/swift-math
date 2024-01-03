@@ -33,12 +33,8 @@ public struct ArgumentList {
 		set { self = newValue }
 	}
 
-	public init(wrappedValue: [AnyNode]) {
+	public init(wrappedValue: [AnyNode] = []) {
 		self.wrappedValue = wrappedValue
 	}
 }
 
-
-struct Value {
-	var value: Int
-}

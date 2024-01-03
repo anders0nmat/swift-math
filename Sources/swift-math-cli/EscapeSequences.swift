@@ -39,7 +39,9 @@ extension TerminalString {
 			}
 		}
 
-		static func style(_ style: [FontStyle]) -> TerminalString { "\(CSI)\(style.map({ String($0.rawValue) }).joined(separator: ";"))m" }
+		static func style(_ style: [FontStyle]) -> TerminalString {
+			style.isEmpty ? "" : "\(CSI)\(style.map({ String($0.rawValue) }).joined(separator: ";"))m"
+		}
 		
 		enum Color: UInt {
 			case black
