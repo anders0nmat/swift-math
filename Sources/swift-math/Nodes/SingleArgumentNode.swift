@@ -1,14 +1,12 @@
 
-public struct FunctionNode: Evaluable {
+public struct SingleArgumentNode: Evaluable {
 	@Argument
 	var arg: AnyNode
 
-	public var argumentsPath: [ArgumentKey<FunctionNode>] { [\.$arg] }
+	public var argumentsPath: [ArgumentKey<Self>] { [\.$arg] }
 
 	public var displayName: String
 	var evaluator: (Double) -> Double
-
-
 
 	public init(displayName: String, evaluator: @escaping (Double) -> Double) {
 		self.evaluator = evaluator

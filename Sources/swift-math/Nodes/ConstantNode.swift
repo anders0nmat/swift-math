@@ -1,6 +1,6 @@
 
 public struct ConstantNode: Evaluable {
-	var value: MathValue
+	public private(set) var value: MathValue
 	public var displayName: String
 
 	public init(_ value: MathFloat, displayName: String) {

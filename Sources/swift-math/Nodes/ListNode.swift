@@ -3,7 +3,7 @@ public struct ListNode: Evaluable {
 
 	@ArgumentList var entries: [AnyNode]
 
-	public var restPath: ArgumentListKey<ListNode>? = \.$entries
+	public var restPath: ArgumentListKey<Self>? = \.$entries
 
 	public init() {}
 

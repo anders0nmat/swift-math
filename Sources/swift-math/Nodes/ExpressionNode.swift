@@ -3,7 +3,7 @@ public struct ExpressionNode: Evaluable {
 	@Argument
 	public var expr: AnyNode
 
-	public var argumentsPath: [ArgumentKey<ExpressionNode>] { [\.$expr] }
+	public var argumentsPath: [ArgumentKey<Self>] { [\.$expr] }
 
 	public func evaluate() -> MathResult {
 		return expr.evaluate()

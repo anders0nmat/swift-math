@@ -1,6 +1,6 @@
 
 public protocol _Node: AnyObject, ArgumentContainer {
-	associatedtype Body: Evaluable
+	associatedtype Body: ContextEvaluable
 
 	var parent: AnyNode? { get set }
 	var root: AnyNode { get }
@@ -17,7 +17,7 @@ public protocol _Node: AnyObject, ArgumentContainer {
 
 public typealias AnyNode = any _Node
 
-public final class Node<Body: Evaluable>: _Node {
+public final class Node<Body: ContextEvaluable>: _Node {
 	public weak var parent: AnyNode?
 	public var root: AnyNode { parent?.root ?? self }
 	
@@ -32,7 +32,7 @@ public final class Node<Body: Evaluable>: _Node {
 	}
 
 	public func evaluate() -> MathResult {
-		let result = body.evaluate()
+		let result = body.evaluate(in: self)
 		if case var .failure(error) = result {
 			error.origin = error.origin ?? self
 			return .failure(error)

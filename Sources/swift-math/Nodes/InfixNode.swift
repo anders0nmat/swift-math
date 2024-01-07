@@ -9,7 +9,7 @@ public struct InfixNode: PriorityEvaluable {
 
 	@ArgumentList var parts: [AnyNode]
 
-	public var restPath: ArgumentListKey<InfixNode>? { \.$parts }
+	public var restPath: ArgumentListKey<Self>? { \.$parts }
 
 	public init(priority: UInt, reducer: @escaping Reducer, displayName: String, children: [AnyNode]) {
 		self.priority = priority
