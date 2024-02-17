@@ -2,6 +2,8 @@
 public typealias ArgumentKey<T> = WritableKeyPath<T, Argument>
 public typealias ArgumentListKey<T> = WritableKeyPath<T, ArgumentList>
 
+// TODO: Translate @propertyWrapper Argument to just Argument
+
 @propertyWrapper
 public struct Argument {
 	public var wrappedValue: AnyNode
@@ -35,6 +37,18 @@ public struct ArgumentList {
 
 	public init(wrappedValue: [AnyNode] = []) {
 		self.wrappedValue = wrappedValue
+	}
+}
+
+public struct ArgumentPaths<T> {
+	public var prefixPath: ArgumentKey<T>?
+	public var argumentsPath: [ArgumentKey<T>]
+	public var restPath: ArgumentListKey<T>?
+
+	public init(prefix: ArgumentKey<T>? = nil, arguments: ArgumentKey<T>..., rest: ArgumentListKey<T>? = nil) {
+		self.prefixPath = prefix
+		self.argumentsPath = arguments
+		self.restPath = rest
 	}
 }
 

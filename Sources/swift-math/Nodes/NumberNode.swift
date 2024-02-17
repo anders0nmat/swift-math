@@ -73,10 +73,12 @@ public struct NumberNode: Evaluable {
 		decimal = true
 	}
 
-	public func evaluate() -> MathResult {
-		switch Double(numberString) {
-			case .some(let val): return .success(.number(val))
-			case .none: return .failure(.evalError(message: "Invalid number string"))
+	public func evaluate() throws -> MathValue {
+		if let value = Double(numberString) {
+			return .number(value)
 		}
+		throw MathError.valueError
 	}
+
+	public func evaluateType() -> MathType? { .number }
 }

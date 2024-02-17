@@ -1,5 +1,5 @@
 
-public struct VariableNode: Evaluable {
+public struct VariableNode: ContextEvaluable {
 	public private(set) var name: String
 	public var displayName: String { name }
 
@@ -14,7 +14,14 @@ public struct VariableNode: Evaluable {
 		return .success
 	}
 
-	public func evaluate() -> MathResult {
-		return .failure(.evalError(message: "Variable '\(name)' not found"))
+	public func evaluate(in context: Node<Self>) throws -> MathValue {
+		if let value = context.variables[name] {
+			return value
+		}
+		throw MathError.missingVariable(name: name)
+	}
+
+	public func evaluateType(in context: Node<VariableNode>) -> MathType? {
+		context.variables[name]?.type
 	}
 }

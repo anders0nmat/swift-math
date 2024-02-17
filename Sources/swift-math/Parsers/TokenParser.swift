@@ -6,15 +6,15 @@ public final class TokenParser {
 	public private(set) var root: AnyNode
 	public private(set) weak var current: AnyNode?
 
-	public private(set) var operators: [String : any Evaluable]
+	public private(set) var operators: [String : any ContextEvaluable]
 
-	public init(operators: [String : any Evaluable]) {
+	public init(operators: [String : any ContextEvaluable]) {
 		self.root = Node.expression()
 		self.current = self.root.children.first
 		self.operators = operators
 	}
 
-	public func addOperator(_ node: any Evaluable, name: String) {
+	public func addOperator(_ node: any ContextEvaluable, name: String) {
 		self.operators[name] = node
 	}
 

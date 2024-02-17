@@ -17,6 +17,9 @@ let parser = TokenParser(operators: [
 	"()": SingleArgumentNode(displayName: "()") { $0 },
 	"pi": ConstantNode(.pi, displayName: "π"),
 	"list": ListNode(),
+	"var": VariableNode(""),
+	"str": IdentifierNode(""),
+	"sum": IterateNode(initialValue: 0, reducer: +),
 ])
 let printer = NodePrinter()
 var debugDraw = false
@@ -33,11 +36,13 @@ calcLoop: while true {
 	else {
 		print("  " + printer.prettyDraw(node: parser.root, current: parser.current))
 	}
-	switch parser.root.evaluate() {
+	switch Result(catching: { try parser.root.evaluate() }) {
 		case .success(.number(let val)):
 			print("  =", String(val).styled([.italic]))
 		case .success(.list(let val)):
 			print("  =", String(describing: val).styled([.italic]))
+		case .success(.identifier(let val)):
+			print("  =", "\"\(val)\"".styled([.italic]))
 		case .failure(let error):
 			print("  =", String(describing: error).styled([.italic]).colored(.red))
 	}		
@@ -56,16 +61,29 @@ calcLoop: while true {
 			case "n", "new", "c", "clear":
 				parser.clear()
 				continue calcLoop
+			case let x where x.starts(with: "s ") || x.starts(with: "store "):
+				let parts = x.split(separator: " ", maxSplits: 1)
+				if parts.count < 2 { continue calcLoop }
+				let name = String(parts[1])
+				if let result = try? parser.root.evaluate() {
+					(parser.root as! Node<ExpressionNode>).localVariables[name] = result
+					lastResult = "Stored result in variable '\(name)'".colored(.green)
+				}
+				else {
+					lastResult = "Cannot store error in variable".colored(.red)
+				}
+				continue calcLoop
 			case "d", "debug":
 				debugDraw.toggle()
 				continue calcLoop
 			case "h", "help":
 				lastResult = """
 				List of commands:
-				  \(":q".colored(.cyan))   \(":quit".colored(.cyan)) : Quits the application
-				  \(":n".colored(.cyan))   \(":new".colored(.cyan))
-				  \(":c".colored(.cyan))   \(":clear".colored(.cyan)) : starts a new equation
-				  \(":h".colored(.cyan))   \(":help".colored(.cyan))  : show this message
+				  \(":q".colored(.cyan))        \(":quit".colored(.cyan)) : Quits the application
+				  \(":n".colored(.cyan))        \(":new".colored(.cyan))
+				  \(":c".colored(.cyan))        \(":clear".colored(.cyan)) : starts a new equation
+				  \(":s <name>".colored(.cyan)) \(":store <name>".colored(.cyan)) : stores the current result in <name>
+				  \(":h".colored(.cyan))        \(":help".colored(.cyan))  : show this message
 				List of known functions:
 				  \(parser.operators.keys.joined(separator: "\n  "))
 				"""

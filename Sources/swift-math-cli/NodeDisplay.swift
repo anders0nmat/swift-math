@@ -10,6 +10,8 @@ struct NodePrinter {
 		ObjectIdentifier(EmptyNode.self) : EmptyDisplay(),
 		ObjectIdentifier(ConstantNode.self) : ConstantDisplay(),
 		ObjectIdentifier(ListNode.self) : ListDisplay(),
+		ObjectIdentifier(VariableNode.self) : VariableDisplay(),
+		ObjectIdentifier(IdentifierNode.self) : IdentifierDisplay(),
 	]
 
 	func prettyDraw(node: AnyNode, current: AnyNode?) -> String {
@@ -112,7 +114,9 @@ struct ExpressionDisplay: NodeDisplayable {
 	}
 
 	func debugDraw(node: AnyNode, printer: (AnyNode) -> [String]) -> [String] {
-		constructorString(of: node, params: []) + debugChildren(of: node, printer: printer)
+		return constructorString(of: node, params: [
+			("variables", String(describing: (node as! Node<ExpressionNode>).variables))
+		]) + debugChildren(of: node, printer: printer)
 	}
 }
 
@@ -136,6 +140,7 @@ struct ConstantDisplay: NodeDisplayable {
 		let value = switch body.value {
 			case .list(let l): ".list(\(l))"
 			case .number(let n): ".number(\(n))"
+			case .identifier(let s): ".identifier(\(s))"
 		}
 		return constructorString(of: node, params: [
 			("displayName", body.displayName),
@@ -152,5 +157,30 @@ struct ListDisplay: NodeDisplayable {
 	func debugDraw(node: AnyNode, printer: (AnyNode) -> [String]) -> [String] {
 		constructorString(of: node, params: []) + debugChildren(of: node, printer: printer)
 	}
+}
+
+struct VariableDisplay: NodeDisplayable {
+	func prettyDraw(node: AnyNode, printer: (AnyNode) -> String) -> String {
+		(node.body as! VariableNode).name
+	}
+
+	func debugDraw(node: AnyNode, printer: (AnyNode) -> [String]) -> [String] {
+		constructorString(of: node, params: [
+			("name", (node.body as! VariableNode).name)
+		])
+	}
+}
+
+struct IdentifierDisplay: NodeDisplayable {
+	func prettyDraw(node: AnyNode, printer: (AnyNode) -> String) -> String {
+		"\"\((node.body as! IdentifierNode).identifier)\""
+	}
+
+	func debugDraw(node: AnyNode, printer: (AnyNode) -> [String]) -> [String] {
+		let body = (node.body as! IdentifierNode)
+		return constructorString(of: node, params: [
+			("identifier", body.identifier),
+		])
+	}	
 }
 

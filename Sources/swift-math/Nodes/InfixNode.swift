@@ -2,14 +2,17 @@
 public struct InfixNode: PriorityEvaluable {
 	public typealias Reducer = (MathFloat, MathFloat) -> MathFloat
 	
-
 	public internal(set) var priority: UInt
 	public internal(set) var displayName: String
 	internal var reducer: Reducer
 
 	@ArgumentList var parts: [AnyNode]
 
-	public var restPath: ArgumentListKey<Self>? { \.$parts }
+	//public var restPath: ArgumentListKey<Self>? { \.$parts }
+
+	//public var argumentPaths = ArgumentPaths<Self>(rest: \.$parts)
+
+	public var arguments = Args(rest: \.$parts)
 
 	public init(priority: UInt, reducer: @escaping Reducer, displayName: String, children: [AnyNode]) {
 		self.priority = priority
@@ -28,24 +31,19 @@ public struct InfixNode: PriorityEvaluable {
 		return new
 	}
 
-	public func evaluate() -> MathResult {
+	public func evaluate() throws -> MathValue {
 		var numbers: [MathFloat] = []
 
 		for child in parts {
-			switch child.evaluate() {
-				case .success(let value):
-					switch value {
-						case .number(let number): numbers.append(number)
-						default: return .failure(.genericError(message: "Non-matching type")) 
-					}
-				case .failure(let error): return .failure(error)
-			}
+			try numbers.append(child.evaluate().asFloat())
 		}
 
 		switch numbers.count {
-			case 1: return .success(.number(numbers.first!))
-			case let x where x > 1: return .success(.number(numbers.suffix(from: 1).reduce(numbers.first!, reducer)))
-			default: return .failure(.evalError(message: "No arguments"))
+			case 1: return .number(numbers.first!)
+			case let x where x > 1: return .number(numbers.suffix(from: 1).reduce(numbers.first!, reducer))
+			default: throw MathError.missingArgument
 		}
 	}
+
+	public func evaluateType() -> MathType? { .number }
 }

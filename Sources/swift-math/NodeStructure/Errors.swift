@@ -1,4 +1,22 @@
 
+public enum MathError: Error {
+	case missingVariable(name: String)
+	case unexpectedType(expected: MathType, found: MathType? = nil)
+	case valueError
+	case missingArgument
+
+	case unknown(Error)
+}
+
+public struct MathErrorContainer: Error {
+	public var error: MathError
+	public weak var origin: AnyNode?
+}
+
+public typealias MathResult = Result<MathValue, MathErrorContainer>
+
+
+/*
 public struct MathError: Error {
 	public enum Message {
 		case evalError(message: String)
@@ -33,3 +51,4 @@ extension MathError: Equatable {
 }
 
 extension MathError.Message: Equatable {}
+*/

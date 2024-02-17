@@ -13,7 +13,7 @@ public struct ConstantNode: Evaluable {
 		self.displayName = displayName
 	}
 
-	public func evaluate() -> MathResult {
-		return .success(value)
-	}
+	public func evaluate() throws -> MathValue { value }
+
+	public func evaluateType() -> MathType? { value.type }
 }
