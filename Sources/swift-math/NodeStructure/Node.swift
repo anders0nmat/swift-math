@@ -16,6 +16,8 @@ public protocol _Node: AnyObject, ArgumentContainer {
 
 	func replace(child node: AnyNode, with new: AnyNode)
 	func replaceSelf(with new: AnyNode)
+
+	func postChange(in node: AnyNode)
 }
 
 public typealias AnyNode = any _Node
@@ -25,7 +27,10 @@ public final class Node<Body: ContextEvaluable>: _Node {
 	public var root: AnyNode { parent?.root ?? self }
 	
 	public var body: Body {
-		didSet { linkChildren() }
+		didSet {
+			linkChildren()
+			parent?.postChange(in: self)
+		}
 	}
 
 	public var localVariables: VariableContainer
@@ -63,14 +68,34 @@ public final class Node<Body: ContextEvaluable>: _Node {
 	public func replaceSelf(with new: AnyNode) { parent?.replace(child: self, with: new) }
 
 	private func linkChildren() { children.forEach { $0.parent = self } }
+
+	public func postChange(in node: AnyNode) {
+		// Reassign triggers all property observers
+		// children = children
+
+		// Smart/complicated approach -- Faster?
+		if let prefixPath = body.arguments.prefixPath, body[keyPath: prefixPath].node === node {
+			body[keyPath: prefixPath].node = node // Trigger observers
+		}
+
+		body.arguments.argumentsPath.forEach {
+			if body[keyPath: $0].node === node {
+				body[keyPath: $0].node = node // Trigger observers
+			}
+		}
+
+		if let restPath = body.arguments.restPath, body[keyPath: restPath].nodeList.contains(where: {$0 === node}) {
+			body[keyPath: restPath].nodeList += [] // Trigger observers
+		}
+	}
 }
 
 public extension Node /* ArgumentContainer */ {
 	var priority: UInt? { (body as? any PriorityEvaluable)?.priority }
 
-	var prefixArgument: Argument? { body.arguments.prefixPath.map { body[keyPath: $0] } }
-	var arguments: [Argument]  { body.arguments.argumentsPath.map { body[keyPath: $0] } }
-	var restArgument: ArgumentList? { body.arguments.restPath.map { body[keyPath: $0] } }
+	var prefixArgument: MathArgument? { body.arguments.prefixPath.map { body[keyPath: $0] } }
+	var arguments: [MathArgument]  { body.arguments.argumentsPath.map { body[keyPath: $0] } }
+	var restArgument: MathArgumentList? { body.arguments.restPath.map { body[keyPath: $0] } }
 
 	var children: [AnyNode] {
 		get {
@@ -82,20 +107,24 @@ public extension Node /* ArgumentContainer */ {
 		set {
 			// Put new values in matching place and fill with EmptyNode if neccessary
 			var nodeIterator = newValue.makeIterator()
+			var bodyClone = body
 
 			if let prefixPath = body.arguments.prefixPath {
-				body[keyPath: prefixPath].node = nodeIterator.next() ?? Node<EmptyNode>.empty()
+				bodyClone[keyPath: prefixPath].node = nodeIterator.next() ?? Node<EmptyNode>.empty()
 			}
 
 			body.arguments.argumentsPath.forEach {
-				body[keyPath: $0].node = nodeIterator.next() ?? Node<EmptyNode>.empty()
+				bodyClone[keyPath: $0].node = nodeIterator.next() ?? Node<EmptyNode>.empty()
 			}
 
 			if let restPath = body.arguments.restPath {
-				body[keyPath: restPath].nodeList = Array(nodeIterator)
+				bodyClone[keyPath: restPath].nodeList = Array(nodeIterator)
 			}
 
-			linkChildren()
+			body = bodyClone
+
+			// Is this needed?
+			//linkChildren()
 		}
 	}
 }

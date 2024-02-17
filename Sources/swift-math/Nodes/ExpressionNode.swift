@@ -1,11 +1,10 @@
 
 public struct ExpressionNode: Evaluable {
-	@Argument
-	public var expr: AnyNode
+	public var expr = Argument()
 
 	//public var argumentsPath: [ArgumentKey<Self>] { [\.$expr] }
 
-	public var arguments = Args(arguments: \.$expr)
+	public var arguments = ArgumentPaths(arguments: \.expr)
 
 	public func evaluate() throws -> MathValue { try expr.evaluate() }
 

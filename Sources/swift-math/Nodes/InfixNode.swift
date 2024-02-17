@@ -6,19 +6,15 @@ public struct InfixNode: PriorityEvaluable {
 	public internal(set) var displayName: String
 	internal var reducer: Reducer
 
-	@ArgumentList var parts: [AnyNode]
+	var parts = ArgumentList()
 
-	//public var restPath: ArgumentListKey<Self>? { \.$parts }
-
-	//public var argumentPaths = ArgumentPaths<Self>(rest: \.$parts)
-
-	public var arguments = Args(rest: \.$parts)
+	public var arguments = ArgumentPaths(rest: \.parts)
 
 	public init(priority: UInt, reducer: @escaping Reducer, displayName: String, children: [AnyNode]) {
 		self.priority = priority
 		self.reducer = reducer
 		self.displayName = displayName
-		self.parts = children
+		self.parts.nodeList = children
 	}
 
 	public func merge(with other: any PriorityEvaluable) -> (any PriorityEvaluable)? {
@@ -27,14 +23,14 @@ public struct InfixNode: PriorityEvaluable {
 		guard other.displayName == displayName else { return nil }
 
 		var new = self
-		new.parts = other.parts + self.parts
+		new.parts.nodeList = other.parts.nodeList + self.parts.nodeList
 		return new
 	}
 
 	public func evaluate() throws -> MathValue {
 		var numbers: [MathFloat] = []
 
-		for child in parts {
+		for child in parts.nodeList {
 			try numbers.append(child.evaluate().asFloat())
 		}
 

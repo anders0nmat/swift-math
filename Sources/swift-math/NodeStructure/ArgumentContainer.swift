@@ -13,9 +13,9 @@ public protocol ArgumentContainer {
 	var argumentNodes: [AnyNode] { get }
 	var restNodes: [AnyNode]? { get }
 
-	var prefixArgument: Argument? { get }
-	var arguments: [Argument] { get }
-	var restArgument: ArgumentList? { get }
+	var prefixArgument: MathArgument? { get }
+	var arguments: [MathArgument] { get }
+	var restArgument: MathArgumentList? { get }
 }
 
 public extension ArgumentContainer {

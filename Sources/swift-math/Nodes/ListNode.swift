@@ -1,18 +1,16 @@
 
 public struct ListNode: Evaluable {
 
-	@ArgumentList var entries: [AnyNode]
+	var entries = ArgumentList()
 
-	//public var restPath: ArgumentListKey<Self>? = \.$entries
-
-	public var arguments = Args(rest: \.$entries)
+	public var arguments = ArgumentPaths(rest: \.entries)
 
 	public init() {}
 
     public func evaluate() throws -> MathValue {
         var list: MathList = []
 
-		for e in entries {
+		for e in entries.nodeList {
 			try list.append(e.evaluate().asFloat())
 		}
 
@@ -20,7 +18,7 @@ public struct ListNode: Evaluable {
     }
 
 	public func evaluateType() -> MathType? {
-		let entryType = entries.map { $0.evaluateType() }
+		let entryType = entries.nodeList.map { $0.evaluateType() }
 		if let firstType = entryType.first, let firstType, entryType.allSatisfy({ $0 == firstType }) {
 			return .list(firstType)
 		}

@@ -1,6 +1,8 @@
 
 public protocol ContextEvaluable {
-	typealias Args = ArgumentPaths<Self>
+	typealias ArgumentPaths = MathArgumentPaths<Self>
+	typealias Argument = MathArgument
+	typealias ArgumentList = MathArgumentList
 
 	/*
 	Path to arguments the function requires
@@ -15,7 +17,7 @@ public protocol ContextEvaluable {
 	var restPath: ArgumentListKey<Self>? { get }
 	*/
 
-	var arguments: Args { get }
+	var arguments: ArgumentPaths { get }
 
 	/*
 	Generic display name
@@ -48,7 +50,7 @@ public extension ContextEvaluable {
 	var restPath: ArgumentListKey<Self>? { nil }
 	*/
 
-	var arguments: Args { Args() }
+	var arguments: ArgumentPaths { ArgumentPaths() }
 
 	var displayName: String { String(describing: Self.self) }
 

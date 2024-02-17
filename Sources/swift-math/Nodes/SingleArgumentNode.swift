@@ -1,11 +1,10 @@
 
 public struct SingleArgumentNode: Evaluable {
-	@Argument
-	var arg: AnyNode
+	var arg = Argument()
 
 	//public var argumentsPath: [ArgumentKey<Self>] { [\.$arg] }
 
-	public var arguments = Args(arguments: \.$arg)
+	public var arguments = ArgumentPaths(arguments: \.arg)
 
 	public var displayName: String
 	var evaluator: (Double) -> Double

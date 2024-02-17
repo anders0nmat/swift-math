@@ -1,28 +1,24 @@
-import Foundation
-
 
 public struct IterateNode: ContextEvaluable {
 	public let reducer: (MathFloat, MathFloat) -> MathFloat
 	public let initialValue: MathFloat
 
-	@Argument var varName: AnyNode
-	@Argument var start: AnyNode {
+	var varName = Argument()
+	var start = Argument() {
 		didSet {
 			if case .list(_) = start.evaluateType() {
-				self.arguments.argumentsPath = [\.$varName, \.$start, \.$expression]
+				self.arguments.argumentsPath = [\.varName, \.start, \.expression]
 			}
 			else {
-				self.arguments.argumentsPath = [\.$varName, \.$start, \.$end, \.$expression]
+				self.arguments.argumentsPath = [\.varName, \.start, \.end, \.expression]
 			}
 		}
 	}
-	@Argument var end: AnyNode
-	@Argument var expression: AnyNode
+	var end = Argument()
+	var expression = Argument()
 
-	//public var argumentsPath: [ArgumentKey<IterateNode>] { [\.$varName, \.$start, \.$end, \.$expression] }
-	
-	public var arguments = Args(
-		arguments: \.$varName, \.$start, \.$end, \.$expression
+	public var arguments = ArgumentPaths(
+		arguments: \.varName, \.start, \.end, \.expression
 	)
 
 	public init(initialValue: MathFloat, reducer: @escaping (MathFloat, MathFloat) -> MathFloat) {
@@ -55,6 +51,6 @@ public struct IterateNode: ContextEvaluable {
 			total = try reducer(total, expression.evaluate().asFloat())
 		}
 
-		return .number(total)		
+		return .number(total)	
     }	
 }
