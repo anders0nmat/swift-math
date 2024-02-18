@@ -2,21 +2,23 @@
 public struct SingleArgumentNode: Evaluable {
 	var arg = Argument()
 
-	//public var argumentsPath: [ArgumentKey<Self>] { [\.$arg] }
-
 	public var arguments = ArgumentPaths(arguments: \.arg)
 
 	public var displayName: String
-	var evaluator: (Double) -> Double
+	var functions: FunctionContainer
 
 	public init(displayName: String, evaluator: @escaping (Double) -> Double) {
-		self.evaluator = evaluator
+		self.functions = FunctionContainer()
+		self.functions.addFunction(evaluator)
 		self.displayName = displayName
 	}
 
-	public func evaluate() throws -> MathValue {
-		try .number(evaluator(arg.evaluate().asFloat()))
+	public init(displayName: String, functions: FunctionContainer.Visitor) {
+		self.functions = FunctionContainer()
+		self.displayName = displayName
+		functions(&self.functions)
 	}
 
-	public func evaluateType() -> MathType? { .number }
+	public func evaluate() throws -> MathValue { try functions.evaluate([arg]) }
+	public func evaluateType() -> MathType? { functions.evaluateType([arg]) }
 }

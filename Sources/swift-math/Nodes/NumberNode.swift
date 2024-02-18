@@ -18,7 +18,7 @@ public struct NumberNode: Evaluable {
 		return result
 	}
 
-	public init(_ value: MathFloat) {
+	public init(_ value: MathNumber) {
 		self.init(rawString: String(value))
 	}
 

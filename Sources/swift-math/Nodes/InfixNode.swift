@@ -1,20 +1,19 @@
 
-public struct InfixNode: PriorityEvaluable {
-	public typealias Reducer = (MathFloat, MathFloat) -> MathFloat
-	
+public struct InfixNode: PriorityEvaluable {	
 	public internal(set) var priority: UInt
 	public internal(set) var displayName: String
-	internal var reducer: Reducer
+	internal var functions: FunctionContainer
 
 	var parts = ArgumentList()
 
 	public var arguments = ArgumentPaths(rest: \.parts)
 
-	public init(priority: UInt, reducer: @escaping Reducer, displayName: String, children: [AnyNode]) {
+	public init(priority: UInt, displayName: String, functions: FunctionContainer.Visitor) {
 		self.priority = priority
-		self.reducer = reducer
+		self.functions = FunctionContainer()
 		self.displayName = displayName
-		self.parts.nodeList = children
+
+		functions(&self.functions)
 	}
 
 	public func merge(with other: any PriorityEvaluable) -> (any PriorityEvaluable)? {
@@ -28,17 +27,18 @@ public struct InfixNode: PriorityEvaluable {
 	}
 
 	public func evaluate() throws -> MathValue {
-		var numbers: [MathFloat] = []
-
-		for child in parts.nodeList {
-			try numbers.append(child.evaluate().asFloat())
+		let values = try parts.nodeList.map { try $0.evaluate() }
+		guard let first = values.first else {
+			throw MathError.missingArgument
 		}
 
-		switch numbers.count {
-			case 1: return .number(numbers.first!)
-			case let x where x > 1: return .number(numbers.suffix(from: 1).reduce(numbers.first!, reducer))
-			default: throw MathError.missingArgument
+		if values.count == 1 {
+			return first
 		}
+
+		return try values
+			.dropFirst()
+			.reduce(first) { try functions.evaluate([$0, $1])}
 	}
 
 	public func evaluateType() -> MathType? { .number }

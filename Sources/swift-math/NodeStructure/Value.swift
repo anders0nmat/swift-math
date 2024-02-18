@@ -1,29 +1,32 @@
 
-public enum MathType: Equatable {
-	case number
-	case identifier
-	indirect case list(MathType)
-}
-
-public typealias MathFloat = Double
-public typealias MathIdentifier = String
-public typealias MathList = [MathFloat]
-
-public enum MathValue: Equatable {
-	case number(MathFloat)
+public enum MathValue: Equatable, CustomStringConvertible {
+	case number(MathNumber)
 	case identifier(MathIdentifier)
 	case list(MathList)
+
+	init<T: MathTypeConvertible>(rawValue: T) {
+		self = rawValue.mathValue
+	}
 
 	var type: MathType {
 		return switch self {
 			case .number(_): .number
 			case .identifier(_): .identifier
-			case .list(_): .list(.number)
+			case .list(let val): .list(val.elementType)
 		}
 	}
 
-	func asFloat() throws -> MathFloat {
-		if case .number(let val) = self { return val }
-		throw MathError.unexpectedType(expected: .number, found: self.type)
+	func asNumber() throws -> MathNumber { try asType() }
+
+	public var description: String {
+		switch self {
+			case .number(let val): String(val)
+			case .identifier(let val): "\"\(val)\""
+			case .list(let val): String(describing: val.values)
+		}
+	}
+
+	func asType<T: MathTypeConvertible>() throws -> T {
+		try T(value: self)
 	}
 }

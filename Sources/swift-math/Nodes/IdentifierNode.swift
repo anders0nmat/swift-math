@@ -7,9 +7,10 @@ public struct IdentifierNode: Evaluable {
 	}
 
 	public mutating func customize(using arguments: [String]) -> Result<Nothing, ParseError> {
-		guard let rawString = arguments.first, arguments.count == 1 else {
-			return .failure(.init(message: .contextError(message: "Too many/few arguments")))
+		guard let rawString = arguments.first else {
+			return .failure(.init(message: .contextError(message: "Not enough arguments")))
 		}
+		guard arguments.count == 1 else { return .failure(.init(message: .contextError(message: "Too many arguments: \(arguments)"))) }
 
 		self = Self.init(rawString)
 		return .success

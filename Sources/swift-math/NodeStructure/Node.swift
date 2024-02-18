@@ -129,6 +129,12 @@ public extension Node /* ArgumentContainer */ {
 	}
 }
 
+extension Node: CustomStringConvertible {
+	public var description: String {
+		"<Node \(Body.self)>"
+	}
+}
+
 extension Node: CustomDebugStringConvertible {
 	public var debugDescription: String {
 		"Node(body: \(body))"

@@ -1,7 +1,7 @@
 
 public struct IterateNode: ContextEvaluable {
-	public let reducer: (MathFloat, MathFloat) -> MathFloat
-	public let initialValue: MathFloat
+	public let reducer: (MathNumber, MathNumber) -> MathNumber
+	public let initialValue: MathNumber
 
 	var varName = Argument()
 	var start = Argument() {
@@ -21,7 +21,7 @@ public struct IterateNode: ContextEvaluable {
 		arguments: \.varName, \.start, \.end, \.expression
 	)
 
-	public init(initialValue: MathFloat, reducer: @escaping (MathFloat, MathFloat) -> MathFloat) {
+	public init(initialValue: MathNumber, reducer: @escaping (MathNumber, MathNumber) -> MathNumber) {
 		self.reducer = reducer
 		self.initialValue = initialValue
 	}
@@ -36,11 +36,11 @@ public struct IterateNode: ContextEvaluable {
 		switch try start.evaluate() {
 			case .number(let lower):
 				guard let lower = Int(exactly: lower) else { throw MathError.valueError }
-				guard let upper = try Int(exactly: end.evaluate().asFloat()) else { throw MathError.valueError }
+				guard let upper = try Int(exactly: end.evaluate().asNumber()) else { throw MathError.valueError }
 
 				items = (lower...upper).map { .number(Double($0)) }
-			case .list(let value):
-				items = value.map { .number($0) }
+			case .list(let list):
+				items = list.values
 			default: throw MathError.unexpectedType(expected: .number)
 		}
 
@@ -48,9 +48,9 @@ public struct IterateNode: ContextEvaluable {
 		for item in items {
 			context.variables[name] = item
 
-			total = try reducer(total, expression.evaluate().asFloat())
+			total = try reducer(total, expression.evaluate().asNumber())
 		}
 
-		return .number(total)	
+		return .number(total)
     }	
 }

@@ -3,7 +3,7 @@ public struct ConstantNode: Evaluable {
 	public private(set) var value: MathValue
 	public var displayName: String
 
-	public init(_ value: MathFloat, displayName: String) {
+	public init(_ value: MathNumber, displayName: String) {
 		self.value = .number(value)
 		self.displayName = displayName
 	}

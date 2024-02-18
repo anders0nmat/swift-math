@@ -7,19 +7,33 @@ func flush() {
 
 let parser = TokenParser(operators: [
 	"#": NumberNode(0),
-	"+": InfixNode(priority: 10, reducer: +, displayName: "+", children: []),
-	"-": InfixNode(priority: 11, reducer: -, displayName: "-", children: []),
-	"*": InfixNode(priority: 40, reducer: *, displayName: "*", children: []),
+	"list": ListNode(),
+	"var": VariableNode(""),
+	"str": IdentifierNode(""),
+
+	"()": SingleArgumentNode(displayName: "()") { $0 },
+	"+": InfixNode(priority: 10, displayName: "+") {
+		$0.addFunction { (a: MathNumber, b: MathNumber) in a + b }
+		$0.addFunction { (a: [MathNumber], b: [MathNumber]) in a + b }
+	},
+	"-": InfixNode(priority: 11, displayName: "-") {
+		$0.addFunction { (a: MathNumber, b: MathNumber) in a - b }
+	},
+	"*": InfixNode(priority: 40, displayName: "*") {
+		$0.addFunction(*)
+	},
+	"/": SinglePrefixNode(displayName: "/", evaluator: /),
+	
+	"pow": SinglePrefixNode(displayName: "^", evaluator: pow),
 	"sin": SingleArgumentNode(displayName: "sin") { sin($0) },
 	"cos": SingleArgumentNode(displayName: "cos") { cos($0) },
 	"tan": SingleArgumentNode(displayName: "tan") { tan($0) },
 	"exp": SingleArgumentNode(displayName: "exp") { exp($0) },
-	"()": SingleArgumentNode(displayName: "()") { $0 },
 	"pi": ConstantNode(.pi, displayName: "π"),
-	"list": ListNode(),
-	"var": VariableNode(""),
-	"str": IdentifierNode(""),
 	"sum": IterateNode(initialValue: 0, reducer: +),
+	"len": SingleArgumentNode(displayName: "len") { (fns: inout FunctionContainer) in
+		fns.addFunction { (a: MathList) in MathNumber(a.values.count) }
+	},
 ])
 let printer = NodePrinter()
 var debugDraw = false
@@ -37,12 +51,8 @@ calcLoop: while true {
 		print("  " + printer.prettyDraw(node: parser.root, current: parser.current))
 	}
 	switch Result(catching: { try parser.root.evaluate() }) {
-		case .success(.number(let val)):
-			print("  =", String(val).styled([.italic]))
-		case .success(.list(let val)):
+		case .success(let val):
 			print("  =", String(describing: val).styled([.italic]))
-		case .success(.identifier(let val)):
-			print("  =", "\"\(val)\"".styled([.italic]))
 		case .failure(let error):
 			print("  =", String(describing: error).styled([.italic]).colored(.red))
 	}		
