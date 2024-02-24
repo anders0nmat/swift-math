@@ -1,5 +1,6 @@
 
 public struct NumberNode: Evaluable {
+	public var identifier: String { "#number" }
 	public internal(set) var value: (integer: String, fraction: String) = ("", "")
 	public internal(set) var sign: FloatingPointSign = .plus
 	public internal(set) var decimal: Bool = false
@@ -44,13 +45,11 @@ public struct NumberNode: Evaluable {
 		self.value.fraction = String(fraction)
 	}
 
-	mutating public func customize(using arguments: [String]) -> Result<Nothing, ParseError> {
-		guard let rawString = arguments.first, arguments.count == 1 else {
-			return .failure(.init(message: .contextError(message: "Too many/few arguments")))
-		}
+	mutating public func customize(using arguments: [String]) -> Bool {
+		guard let rawString = arguments.first, arguments.count == 1 else { return false }
 
 		self = Self.init(rawString: rawString)
-		return .success
+		return true
 	}
 
 	mutating func negate() {

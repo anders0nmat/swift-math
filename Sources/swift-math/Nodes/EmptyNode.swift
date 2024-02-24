@@ -1,5 +1,6 @@
 
 public struct EmptyNode: Evaluable {
+	public var identifier: String { "#empty" }
     public func evaluate() throws -> MathValue {
 		throw MathError.missingArgument
     }

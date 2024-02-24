@@ -4,6 +4,8 @@ public enum MathType: Equatable, Hashable {
 	case identifier
 	indirect case list(MathType?)
 
+	case generic(MathGeneric.Identifier)
+
 	init<T: MathTypeConvertible>(rawValue: T) {	
 		self = T.mathType
 	}
@@ -13,6 +15,15 @@ public typealias MathNumber = Double
 public typealias MathIdentifier = String
 
 public typealias RawMathList<T: MathTypeConvertible> = Array<T>
+
+public extension MathNumber {
+	func asInt() throws -> Int {
+		if let i = Int(exactly: self) {
+			return i
+		}
+		throw MathError.valueError
+	}
+}
 
 
 public struct MathList: Equatable {
@@ -35,8 +46,9 @@ public struct MathList: Equatable {
 	}
 
 	public init<T: MathTypeConvertible>(_ rawList: RawMathList<T>) {
-		self.values = rawList.map { MathValue(rawValue: $0) }
-		self.elementType = T.mathType
+		try! self.init(rawList.map { MathValue(rawValue: $0) })
+		/*self.values = rawList.map { MathValue(rawValue: $0) }
+		self.elementType = T.mathType*/
 	}
 
 	mutating func append(_ newElement: MathValue) throws {
@@ -117,10 +129,6 @@ extension RawMathList: MathTypeConvertible {
 	public init(value: MathValue) throws {
 		guard case let .list(v) = value else {
 			throw MathError.unexpectedType(expected: Self.mathType, found: value.type)
-		}
-
-		guard v.elementType == Element.mathType else {
-			throw MathError.unexpectedType(expected: Self.mathType, found: .list(v.elementType))
 		}
 
 		self = try v.values.map { try Element(value: $0) }

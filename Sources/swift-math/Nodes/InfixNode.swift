@@ -1,17 +1,16 @@
 
 public struct InfixNode: PriorityEvaluable {	
 	public internal(set) var priority: UInt
-	public internal(set) var displayName: String
-	internal var functions: FunctionContainer
-
-	var parts = ArgumentList()
-
+	public var identifier: String
 	public var arguments = ArgumentPaths(rest: \.parts)
 
-	public init(priority: UInt, displayName: String, functions: FunctionContainer.Visitor) {
+	var functions: FunctionContainer
+	var parts = ArgumentList()
+
+	public init(priority: UInt, identifier: String, functions: FunctionContainer.Visitor) {
 		self.priority = priority
 		self.functions = FunctionContainer()
-		self.displayName = displayName
+		self.identifier = identifier
 
 		functions(&self.functions)
 	}
@@ -19,7 +18,7 @@ public struct InfixNode: PriorityEvaluable {
 	public func merge(with other: any PriorityEvaluable) -> (any PriorityEvaluable)? {
 		guard let other = other as? InfixNode else { return nil }
 		guard other.priority == priority else { return nil }
-		guard other.displayName == displayName else { return nil }
+		guard other.identifier == identifier else { return nil }
 
 		var new = self
 		new.parts.nodeList = other.parts.nodeList + self.parts.nodeList
@@ -32,14 +31,22 @@ public struct InfixNode: PriorityEvaluable {
 			throw MathError.missingArgument
 		}
 
-		if values.count == 1 {
-			return first
-		}
+		if values.count == 1 { return first }
 
 		return try values
 			.dropFirst()
 			.reduce(first) { try functions.evaluate([$0, $1])}
 	}
 
-	public func evaluateType() -> MathType? { .number }
+	public func evaluateType() -> MathType? {
+		let values = parts.nodeList.map { $0.evaluateType() }
+		guard !values.contains(nil) else { return nil }
+		guard let first = values.first else { return nil }
+
+		if values.count == 1 { return first }
+
+		return values
+			.dropFirst()
+			.reduce(first!) { functions.evaluateType([$0, $1!]) }
+	}
 }

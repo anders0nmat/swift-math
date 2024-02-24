@@ -1,36 +1,24 @@
 
-public struct ParseError: Error {
-    public enum Message {
-        case contextError(message: String? = nil)
+public enum ParseError: Error {
+	case unknownToken(TreeParser.Token)
+	case noHead
 
-		case unexpectedHead
-		case emptyHead
-		case noEmptyHead
-		case noHead
-        case unknownToken
-    }
+	case unexpectedHead
+	case customizationFailed(for: [String], on: AnyEvaluable)
 
-    var message: Message
-    weak var currentRoot: AnyNode?
-    weak var currentHead: AnyNode?
+	case syntaxError
+
+	case unknown(Error)
 }
 
-extension ParseError {
-    static var unknownToken: Self { .init(message: .unknownToken) }
-	static var noHead: Self       { .init(message: .noHead) }
-	static var emptyHead: Self    { .init(message: .emptyHead) }
-	static var unexpectedNode: Self { .init(message: .unexpectedHead) }
-
-	static func noEmptyHead(head: AnyNode) -> Self { .init(message: .noEmptyHead, currentHead: head) }
+public struct ParseErrorContainer: Error {
+	var error: ParseError
+	weak var root: AnyNode?
+	weak var current: AnyNode?
 }
 
-extension ParseError: Equatable {
-    public static func == (lhs: ParseError, rhs: ParseError) -> Bool {
-		return
-			lhs.message == rhs.message &&
-			lhs.currentRoot === rhs.currentRoot &&
-			lhs.currentHead === rhs.currentHead
-    }
+extension ParseErrorContainer: CustomStringConvertible {
+	public var description: String {
+		"\(error) at (current: \(current != nil ? String(describing: current!) : "nil"), root: \(root != nil ? String(describing: root!) : "nil"))"
+	}
 }
-
-extension ParseError.Message: Equatable {}

@@ -1,21 +1,20 @@
 
 public struct IdentifierNode: Evaluable {
-	public private(set) var identifier: String
+	public var identifier: String { "#identifier" }
+	public var name: String
 
 	public init(_ identifier: String) {
-		self.identifier = identifier
+		self.name = identifier
 	}
 
-	public mutating func customize(using arguments: [String]) -> Result<Nothing, ParseError> {
-		guard let rawString = arguments.first else {
-			return .failure(.init(message: .contextError(message: "Not enough arguments")))
-		}
-		guard arguments.count == 1 else { return .failure(.init(message: .contextError(message: "Too many arguments: \(arguments)"))) }
+	public mutating func customize(using arguments: [String]) -> Bool {
+		guard let rawString = arguments.first else { return false }
+		guard arguments.count == 1 else { return false }
 
 		self = Self.init(rawString)
-		return .success
+		return true
 	}
 
-	public func evaluate() throws -> MathValue { .identifier(identifier) }
+	public func evaluate() throws -> MathValue { .identifier(name) }
 	public func evaluateType() -> MathType? { .identifier }
 }

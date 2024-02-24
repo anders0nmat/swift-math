@@ -1,22 +1,82 @@
 
-public final class TokenParser {
-	public typealias Token = (name: String, args: [String])
-	public typealias ParseResult = Result<Nothing, ParseError>
+public final class TreeParser {
+	public struct Token: Equatable {
+		public var name: String
+		public var args: [String]
 
-	public private(set) var root: AnyNode
-	public private(set) weak var current: AnyNode?
+		public init(_ name: String, _ args: [String] = []) {
+			self.init(name: name, args: args)
+		}
 
-	public private(set) var operators: [String : any ContextEvaluable]
+		public init(name: String, args: [String] = []) {
+			self.name = name
+			self.args = args
+		}
+	}
 
-	public init(operators: [String : any ContextEvaluable]) {
+	public internal(set) var root: AnyNode
+	public internal(set) weak var current: AnyNode?
+
+	public internal(set) var operators: [String : AnyEvaluable]
+
+	public var tokenAdvance = Token("->")
+	public var tokenDeadvance = Token("<-")
+
+	public init(operators: [String : AnyEvaluable]) {
 		self.root = Node.expression()
 		self.current = self.root.children.first
 		self.operators = operators
 	}
 
-	public func addOperator(_ node: any ContextEvaluable, name: String) {
-		self.operators[name] = node
+	public convenience init(operators: [AnyEvaluable] = []) {
+		self.init(operators: Dictionary(operators.map {($0.identifier, $0)}, uniquingKeysWith: { a, _ in a }))
 	}
+
+	public func add(name: String, operator op: AnyEvaluable) {
+		self.operators[name] = op
+	}
+
+	public func add(_ op: AnyEvaluable) {
+		add(name: op.identifier, operator: op)
+	}
+
+	public func add(operators: [String : AnyEvaluable]) {
+		self.operators.merge(operators, uniquingKeysWith: { $1 })
+	}
+
+	public func clear() {
+		self.root = Node.expression()
+		self.current = self.root.children.first
+	}
+
+	public func erase() {
+		let newCurrent = Node.empty()
+		self.current?.replaceSelf(with: newCurrent)
+		self.current = newCurrent
+	}
+
+	internal func processToken(_ token: Token) throws {
+		do {
+			if try !processNavigation(token) {
+				try processOperator(token)
+			}
+		}
+		catch let err as ParseError {
+			throw ParseErrorContainer(
+				error: err,
+				root: self.root,
+				current: self.current)
+		}
+		catch let err {
+			throw ParseErrorContainer(
+				error: .unknown(err),
+				root: self.root,
+				current: self.current)
+		}
+	}
+
+
+	/* Token Parsing */
 
 	internal func getHead(from node: AnyNode) -> AnyNode {
 		if node.argumentCount > 0 {
@@ -39,7 +99,7 @@ public final class TokenParser {
 	Gets the next child of `node` after an optional `current`.
 	If Result is nil, there is no next child, indicating that `node` should be kept as `currentNode`
 	*/
-	private func nextChild(of node: AnyNode, from origin: NavigationOrigin = .here) -> AnyNode? {
+	internal func nextChild(of node: AnyNode, from origin: NavigationOrigin = .here) -> AnyNode? {
 		// Buffering because not O(1) lookup
 		let children = node.children
 		
@@ -83,7 +143,7 @@ public final class TokenParser {
 
 	}
 
-	private func prevChild(of node: AnyNode, from origin: NavigationOrigin = .here) -> AnyNode? {
+	internal func prevChild(of node: AnyNode, from origin: NavigationOrigin = .here) -> AnyNode? {
 		// Buffering because not O(1) lookup
 		let children = node.children
 		
@@ -124,45 +184,11 @@ public final class TokenParser {
 		}
 	}
 
-	internal func advanceHead(current start: AnyNode) -> AnyNode {
-		guard let parent = start.parent else {
-			// TODO: Is this useful behavior?
-			return start
-		}
-
-		if start.children.isEmpty {
-			if start !== parent.children.last {
-				return parent.children[parent.children.index(after: parent.children.firstIndex(where: {$0 === start})!)]
-			}
-			else if parent.hasRest && !(start is Node<EmptyNode>) {
-				parent.children.append(Node.empty())
-				return parent.children.last!
-			}
-			return parent
-		}
-		else {
-			return start.children.first!
-		}
-	}
-
-	internal func deadvanceHead(current start: AnyNode) -> AnyNode {
-		if start.children.isEmpty {
-			return start.parent ?? start
-		}
-		else {
-			// Can go one level deeper
-			if start.hasRest {
-				start.children.append(Node.empty())
-			}
-			return start.children.last!
-		}
-	}
-
-	internal func processNumber(_ token: Token) -> ParseResult {
+	internal func processNumber(_ token: Token) throws {
 		let decimalNumbers = Character("0")...Character("9")
 
 		guard let arg = token.args.first, token.args.count == 1 else {
-			return .failure(.unknownToken)
+			throw ParseError.unknownToken(token)
 		}
 
 		switch current {
@@ -173,27 +199,25 @@ public final class TokenParser {
 					case ".": insertString = "0."
 					case let num where Double(num) != nil: 
 						insertString = num
-					default: return .failure(.unknownToken)
+					default: throw ParseError.unknownToken(token)
 				}
 				let newOp = NumberNode(insertString)
 				let newNode = newOp.makeNode()
 				current!.replaceSelf(with: newNode)
 				self.current = newNode
-				return .success
 			case let number as Node<NumberNode>:
 				switch arg {
 					case "+-": number.body.negate()
 					case ".": number.body.fraction()
 					case let num where num.allSatisfy { decimalNumbers.contains($0) }:
 						number.body.append(number: num)
-					default: return .failure(.unknownToken)
+					default: throw ParseError.unknownToken(token)
 				}
-				return .success
-			default: return .failure(.unknownToken)
+			default: throw ParseError.unknownToken(token)
 		}
 	}
 
-	internal func processPriorityOperator(_ op: any PriorityEvaluable) -> ParseResult {
+	internal func processPriorityOperator(_ op: any PriorityEvaluable) throws {
 		var current = self.current
 		let opPrio = op.priority
 
@@ -206,7 +230,7 @@ public final class TokenParser {
 			current = current!.parent
 		}
 
-		guard let current else { return .failure(.emptyHead) }
+		guard let current else { throw ParseError.unexpectedHead }
 
 		let newNode: AnyNode
 		if let other = current.body as? any PriorityEvaluable, 
@@ -224,25 +248,26 @@ public final class TokenParser {
 			newNode.children += [current, Node.empty()]
 		}
 		self.current = newNode.children.last
-		return .success
 	}
 
-	internal func processOperator(_ token: Token) -> ParseResult {
-		guard var op = operators[token.name] else { return .failure(.unknownToken) }
-		guard let current else { return .failure(.noHead) }
-		guard current !== root else { return .failure(.noHead) }
+	internal func processOperator(_ token: Token) throws {
+		guard var op = operators[token.name] else { throw ParseError.unknownToken(token) }
+		guard let current else { throw ParseError.noHead }
+		guard current !== root else { throw ParseError.unexpectedHead }
 
 		op.resetArguments()
-		if case .failure(let error) = op.customize(using: token.args) {
-			return .failure(error)
+		if !op.customize(using: token.args) {
+			throw ParseError.customizationFailed(for: token.args, on: op)
 		}
 
 		if op is NumberNode {
-			return processNumber(token)
+			try processNumber(token)
+			return
 		}
 
 		if let op = op as? any PriorityEvaluable {
-			return processPriorityOperator(op)
+			try processPriorityOperator(op)
+			return
 		}
 
 		// Fully copied op at this point
@@ -252,13 +277,12 @@ public final class TokenParser {
 		if newNode.hasPrefix {
 			if current is Node<EmptyNode> {
 				// TODO: Allow prefix arguments to be empty?
-				return .failure(.emptyHead)
+				throw ParseError.unexpectedHead
 			}
 			else {
 				current.replaceSelf(with: newNode)
 				newNode.children[0] = current
 				self.current = getHead(from: newNode)
-				return .success
 			}
 		}
 		else {
@@ -266,65 +290,23 @@ public final class TokenParser {
 				current.replaceSelf(with: newNode)
 
 				self.current = getHead(from: newNode)
-				return .success
 			}
 			else {
-				return .failure(.noEmptyHead(head: current))
+				throw ParseError.unexpectedHead
 			}
 		}
 	}
 
-	internal func processNavigation(_ token: Token) -> ParseResult {
-		guard let current else {
-			return .failure(.emptyHead)
-		}
+	internal func processNavigation(_ token: Token) throws -> Bool {
+		guard let current else { throw ParseError.noHead }
 
 		switch token {
-			case ("->", []): 
-				self.current = nextChild(of: current)
-				//self.current = advanceHead(current: current)
-				return .success
-			case ("<-", []):
-				self.current = prevChild(of: current)
-				return .success
-			default: return .failure(.unknownToken)
-		}		
-	}
-
-	public func parse(token: Token) -> ParseResult {
-		// Order matters! First to return success aborts processing
-		let handlers = [
-			processNavigation,
-			processOperator,
-		]
-
-		for handler in handlers {
-			let result = handler(token)
-			switch result {
-				case .success: return .success
-				case .failure(let error) where error.message != .unknownToken:
-					return result
-				default: break
-			}
+			case tokenAdvance: self.current = nextChild(of: current)
+			case tokenDeadvance: self.current = prevChild(of: current)
+			default: return false
 		}
-
-		return .failure(.unknownToken)
-	}
-
-	public func parse(token: String, args: [String] = []) -> ParseResult {
-		parse(token: (name: token, args: args))
-	}
-
-	public func parse(_ command: String) -> ParseResult {
-		let parts = command.split(separator: ":")
-		let name = String(parts[0])
-		let args = parts.suffix(from: 1).map { String($0) }
-		return parse(token: name, args: args)
-	}
-
-	public func clear() {
-		self.root = Node.expression()
-		self.current = self.root.children.first
+		return true
 	}
 }
+
 

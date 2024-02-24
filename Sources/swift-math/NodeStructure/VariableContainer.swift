@@ -1,6 +1,6 @@
 
 public class VariableContainer {
-	public private(set) var variables: [String: MathValue]
+	public var variables: [String: MathValue]
 	public private(set) weak var parentScope: VariableContainer?
 
 	public init() {
@@ -20,5 +20,12 @@ public class VariableContainer {
 	func inScope(_ parent: VariableContainer?) -> Self {
 		self.parentScope = parent
 		return self
+	}
+
+	public func listVariables() -> [String] {
+		let keys = variables.keys
+		let parentList = parentScope?.listVariables().filter({ !keys.contains($0) }) ?? []
+
+		return parentList + keys
 	}
 }

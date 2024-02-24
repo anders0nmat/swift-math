@@ -2,6 +2,7 @@
 public struct IterateNode: ContextEvaluable {
 	public let reducer: (MathNumber, MathNumber) -> MathNumber
 	public let initialValue: MathNumber
+	public var identifier: String
 
 	var varName = Argument()
 	var start = Argument() {
@@ -21,15 +22,14 @@ public struct IterateNode: ContextEvaluable {
 		arguments: \.varName, \.start, \.end, \.expression
 	)
 
-	public init(initialValue: MathNumber, reducer: @escaping (MathNumber, MathNumber) -> MathNumber) {
+	public init(identifier: String, initialValue: MathNumber, reducer: @escaping (MathNumber, MathNumber) -> MathNumber) {
+		self.identifier = identifier
 		self.reducer = reducer
 		self.initialValue = initialValue
 	}
 
     public func evaluate(in context: Node<IterateNode>) throws -> MathValue {
-		guard case .identifier(let name) = try varName.evaluate() else {
-			throw MathError.unexpectedType(expected: .identifier)
-		}
+		let name = try varName.evaluate().asIdentifier()
 
 		var items: [MathValue] = []
 

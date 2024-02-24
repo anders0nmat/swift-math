@@ -1,4 +1,6 @@
 
+public typealias AnyEvaluable = any ContextEvaluable
+
 public protocol ContextEvaluable {
 	typealias ArgumentPaths = MathArgumentPaths<Self>
 	typealias Argument = MathArgument
@@ -20,16 +22,16 @@ public protocol ContextEvaluable {
 	var arguments: ArgumentPaths { get }
 
 	/*
-	Generic display name
+	Unique identifier for this operation
 	*/
-	var displayName: String { get }
+	var identifier: String { get }
 
 	/*
 	Initialization for individual nodes.
 	Required if you want something per-node initialized.
 	Example: variable names, constant expression names
 	*/
-	mutating func customize(using arguments: [String]) -> Result<Nothing, ParseError>
+	mutating func customize(using arguments: [String]) -> Bool
 
 	/*
 	Function to call if evaluation is requested.
@@ -52,9 +54,7 @@ public extension ContextEvaluable {
 
 	var arguments: ArgumentPaths { ArgumentPaths() }
 
-	var displayName: String { String(describing: Self.self) }
-
-	mutating func customize(using arguments: [String]) -> Result<Nothing, ParseError> { .success }
+	mutating func customize(using arguments: [String]) -> Bool { true }
 
 	mutating func resetArguments() {
 		if let prefixPath = arguments.prefixPath {

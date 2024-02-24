@@ -1,17 +1,17 @@
 
 public struct VariableNode: ContextEvaluable {
+	public var identifier: String { "#variable" }
 	public private(set) var name: String
-	public var displayName: String { name }
 
 	public init(_ name: String) {
 		self.name = name
 	}
 
-	public mutating func customize(using arguments: [String]) -> Result<Nothing, ParseError> {
-		guard let name = arguments.first else { return .failure(.emptyHead) }
+	public mutating func customize(using arguments: [String]) -> Bool {
+		guard let name = arguments.first else { return false }
 
 		self.name = name
-		return .success
+		return true
 	}
 
 	public func evaluate(in context: Node<Self>) throws -> MathValue {

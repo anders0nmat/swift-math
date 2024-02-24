@@ -17,6 +17,7 @@ public enum MathValue: Equatable, CustomStringConvertible {
 	}
 
 	func asNumber() throws -> MathNumber { try asType() }
+	func asIdentifier() throws -> MathIdentifier { try asType() }
 
 	public var description: String {
 		switch self {

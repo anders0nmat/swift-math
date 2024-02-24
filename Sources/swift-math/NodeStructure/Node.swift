@@ -131,7 +131,7 @@ public extension Node /* ArgumentContainer */ {
 
 extension Node: CustomStringConvertible {
 	public var description: String {
-		"<Node \(Body.self)>"
+		"<Node \(Body.self) \"\(body.identifier)\">"
 	}
 }
 

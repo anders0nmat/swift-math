@@ -1,44 +1,77 @@
 import Foundation
 import swift_math
 
-func flush() {
-	fflush(stdout)
-}
+func flush() { fflush(stdout) }
 
-let parser = TokenParser(operators: [
-	"#": NumberNode(0),
-	"list": ListNode(),
-	"var": VariableNode(""),
-	"str": IdentifierNode(""),
-
-	"()": SingleArgumentNode(displayName: "()") { $0 },
-	"+": InfixNode(priority: 10, displayName: "+") {
-		$0.addFunction { (a: MathNumber, b: MathNumber) in a + b }
-		$0.addFunction { (a: [MathNumber], b: [MathNumber]) in a + b }
-	},
-	"-": InfixNode(priority: 11, displayName: "-") {
-		$0.addFunction { (a: MathNumber, b: MathNumber) in a - b }
-	},
-	"*": InfixNode(priority: 40, displayName: "*") {
-		$0.addFunction(*)
-	},
-	"/": SinglePrefixNode(displayName: "/", evaluator: /),
-	
-	"pow": SinglePrefixNode(displayName: "^", evaluator: pow),
-	"sin": SingleArgumentNode(displayName: "sin") { sin($0) },
-	"cos": SingleArgumentNode(displayName: "cos") { cos($0) },
-	"tan": SingleArgumentNode(displayName: "tan") { tan($0) },
-	"exp": SingleArgumentNode(displayName: "exp") { exp($0) },
-	"pi": ConstantNode(.pi, displayName: "π"),
-	"sum": IterateNode(initialValue: 0, reducer: +),
-	"len": SingleArgumentNode(displayName: "len") { (fns: inout FunctionContainer) in
-		fns.addFunction { (a: MathList) in MathNumber(a.values.count) }
-	},
-])
-let printer = NodePrinter()
 var debugDraw = false
 
 var lastResult = ""
+
+let parser = TreeParser(operators: operators)
+let printer = NodePrinter()
+let commands: [Command] = [
+	Command(["q", "quit"], description: "Quits the application") {
+		exit(0)
+	},
+	Command(["h", "help"], description: "Show this help list") {
+		lastResult = ""
+		for cmd in commands {
+			lastResult += cmd.getHelp(columnWidth: 15, prefix: "  ") + "\n"
+		}
+	},
+	Command(["n", "new", "c", "clear"], description: "Starts a new equation. Keeps global variables") {
+		let globals = parser.root.variables.variables
+		parser.clear()
+		parser.root.variables.variables = globals
+	},
+	Command(["s", "store"], description: "Stores current result in variable <arg>") { name in
+		if let result = try? parser.root.evaluate() {
+			(parser.root as! Node<ExpressionNode>).localVariables[name] = result
+			lastResult = "Stored result in variable '\(name)'".colored(.green)
+		}
+		else {
+			lastResult = "Cannot store error in vaiable"
+		}
+	},
+	Command(["d", "debug"], description: "Toggles debug mode") {
+		debugDraw.toggle()
+	},
+	Command(["e", "expr"], description: "Parse <arg> as one expression") { expr in
+		try parser.parse(expression: expr)
+		lastResult = "Success!".colored(.green)
+	},
+	Command(["t", "token"], description: "Insert <arg> as a token") { command in
+		try parser.parse(command: command)
+		lastResult = "Success!".colored(.green)
+	},
+	Command(["v", "vars"], description: "Shows all available variables") {
+		guard let node = parser.current else { return }
+
+		lastResult = node.variables.listVariables().joined(separator: "\n")
+	},
+	Command(["r", "remove"], description: "Remove selected expression") {
+		parser.erase()
+	},
+]
+
+func executeCommand(_ input: String) {
+	let parts = input.split(separator: " ", maxSplits: 1)
+	let command = String(parts[0])
+	let arg = String(parts.count > 1 ? parts[1] : "")
+
+	if let commandObject = commands.first(where: { $0.matches(command) }) {
+		do {
+			try commandObject.call(arg)
+		}
+		catch let e {
+			lastResult = "Command error: \(e)".colored(.red)
+		}
+	}
+	else {
+		lastResult = "Unknown Command: \(command)".colored(.red)
+	}
+}
+
 calcLoop: while true {
 	print(TerminalString.Cursor.clearScreen, TerminalString.Cursor.move(), separator: "", terminator: "")
 	print("SwiftMath Calculator".styled([.bold]))
@@ -62,64 +95,20 @@ calcLoop: while true {
 	print(">> ", terminator: "")
 	flush()
 
-	guard let command = readLine(strippingNewline: true) else { continue }
+	guard let input = readLine(strippingNewline: true) else { continue }
 
-	if command.hasPrefix(":") {
-		switch command.lowercased().suffix(from: command.index(after: command.startIndex)) {
-			case "q", "quit":
-				break calcLoop
-			case "n", "new", "c", "clear":
-				parser.clear()
-				continue calcLoop
-			case let x where x.starts(with: "s ") || x.starts(with: "store "):
-				let parts = x.split(separator: " ", maxSplits: 1)
-				if parts.count < 2 { continue calcLoop }
-				let name = String(parts[1])
-				if let result = try? parser.root.evaluate() {
-					(parser.root as! Node<ExpressionNode>).localVariables[name] = result
-					lastResult = "Stored result in variable '\(name)'".colored(.green)
-				}
-				else {
-					lastResult = "Cannot store error in variable".colored(.red)
-				}
-				continue calcLoop
-			case "d", "debug":
-				debugDraw.toggle()
-				continue calcLoop
-			case "h", "help":
-				lastResult = """
-				List of commands:
-				  \(":q".colored(.cyan))        \(":quit".colored(.cyan)) : Quits the application
-				  \(":n".colored(.cyan))        \(":new".colored(.cyan))
-				  \(":c".colored(.cyan))        \(":clear".colored(.cyan)) : starts a new equation
-				  \(":s <name>".colored(.cyan)) \(":store <name>".colored(.cyan)) : stores the current result in <name>
-				  \(":h".colored(.cyan))        \(":help".colored(.cyan))  : show this message
-				List of known functions:
-				  \(parser.operators.keys.joined(separator: "\n  "))
-				"""
-				continue calcLoop
-			case let unknown:
-				lastResult = "Unknown Command: \(unknown)".colored(.red)
-				continue calcLoop
-		}
+	if input.hasPrefix(":") {
+		executeCommand(String(input.lowercased().dropFirst()))
+		continue calcLoop
 	}
 
-	let parseResult: TokenParser.ParseResult
-	if 
-		command == "+-" || 
-		command == "." || 
-		command.allSatisfy({ ("0"..."9").contains($0) }) ||
-		Double(command) != nil {
+	do {
+		try parser.parse(expression: input)
 
-		parseResult = parser.parse(token: "#", args: [command])
+		lastResult = "Success!".colored(.green)
 	}
-	else {
-		parseResult = parser.parse(command)
-	}
-
-	switch parseResult {
-		case .success(_): lastResult = "Success!".colored(.green)
-		case .failure(let error): lastResult = String(describing: error).colored(.red)
+	catch let err {
+		lastResult = String(describing: err).colored(.red)
 	}
 }
 

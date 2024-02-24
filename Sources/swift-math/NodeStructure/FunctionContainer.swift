@@ -11,20 +11,23 @@ public struct FunctionContainer {
 	public typealias Visitor = (inout FunctionContainer) -> Void
 
 	private var overloads: [CallSignature : Function]
-	//private var generics: [(CallSignature, Function)]
-
 
 	public init() {
 		self.overloads = [:]
-		//self.generics = []
 	}
 
-	private func typeMatches(g: MathType, c: MathType) -> Bool {
+	private func typeMatches(g: MathType, c: MathType, pinned: inout [MathGeneric.Identifier: MathType]) -> Bool {
 		switch (g, c) {
 			case let (a, b) where a == b: return true
-			case (.list(nil), .list(_)): return true
 			case (.list(_), .list(nil)): return true
-			case let (.list(a), .list(b)): return typeMatches(g: a!, c: b!)
+			case let (.list(a), .list(b)): return typeMatches(g: a!, c: b!, pinned: &pinned)
+
+			case let (.generic(idx), b):
+				if let a = pinned[idx] {
+					return a == b
+				}
+				pinned[idx] = b
+				return true
 			default: return false
 		}
 	}
@@ -32,7 +35,9 @@ public struct FunctionContainer {
 	private func signatureFits(generic: CallSignature, concrete: CallSignature) -> Bool {
 		guard generic.count == concrete.count else { return false }
 
-		return zip(generic, concrete).allSatisfy { typeMatches(g: $0.0, c: $0.1) }
+		var typeBindings: [MathGeneric.Identifier: MathType] = [:]
+
+		return zip(generic, concrete).allSatisfy { typeMatches(g: $0.0, c: $0.1, pinned: &typeBindings) }
 	}
 
 	public func getFunction(for argumentTypes: CallSignature) -> Function? {
@@ -70,7 +75,11 @@ public struct FunctionContainer {
 	}
 
 	public func evaluateType(_ nodes: [AnyNode]) -> MathType? {
-		let signature = nodes.map({ $0.evaluateType() })
+		evaluateType(nodes.map({ $0.evaluateType() }))
+	}
+
+	public func evaluateType(_ values: [MathType?]) -> MathType? {
+		let signature = values
 		if signature.contains(nil) {
 			return nil
 		}
@@ -82,7 +91,7 @@ public struct FunctionContainer {
 }
 
 public extension FunctionContainer {
-	mutating func addFunction<T0, R>(_ fn: @escaping (T0) -> R) 
+	mutating func addFunction<T0, R>(_ fn: @escaping (T0) throws -> R) 
 	where T0: MathTypeConvertible, R: MathTypeConvertible {
 		addFunction(
 			signature: [T0.mathType],
@@ -97,7 +106,7 @@ public extension FunctionContainer {
 		)
 	}
 
-	mutating func addFunction<T0, T1, R>(_ fn: @escaping (T0, T1) -> R) 
+	mutating func addFunction<T0, T1, R>(_ fn: @escaping (T0, T1) throws -> R) 
 	where T0: MathTypeConvertible, T1: MathTypeConvertible, R: MathTypeConvertible {
 		addFunction(
 			signature: [T0.mathType, T1.mathType],
@@ -113,7 +122,7 @@ public extension FunctionContainer {
 		)
 	}
 
-	mutating func addFunction<T0, T1, T2, R>(_ fn: @escaping (T0, T1, T2) -> R) 
+	mutating func addFunction<T0, T1, T2, R>(_ fn: @escaping (T0, T1, T2) throws -> R) 
 	where T0: MathTypeConvertible, T1: MathTypeConvertible, T2: MathTypeConvertible, R: MathTypeConvertible {
 		addFunction(
 			signature: [T0.mathType, T1.mathType, T2.mathType],
@@ -130,7 +139,7 @@ public extension FunctionContainer {
 		)
 	}
 
-	mutating func addFunction<T0, T1, T2, T3, R>(_ fn: @escaping (T0, T1, T2, T3) -> R) 
+	mutating func addFunction<T0, T1, T2, T3, R>(_ fn: @escaping (T0, T1, T2, T3) throws -> R) 
 	where T0: MathTypeConvertible, T1: MathTypeConvertible, T2: MathTypeConvertible, T3: MathTypeConvertible, R: MathTypeConvertible {
 		addFunction(
 			signature: [T0.mathType, T1.mathType, T2.mathType, T3.mathType],
@@ -146,9 +155,6 @@ public extension FunctionContainer {
 				}
 			)
 		)
-	}
-
-
-	
+	}	
 }
 
