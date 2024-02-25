@@ -1,31 +1,93 @@
 
-public class VariableContainer {
-	public var variables: [String: MathValue]
-	public private(set) weak var parentScope: VariableContainer?
+public final class VariableContainer {
+	private var variables: [String: MathValue]
+	private var variableTypes: [String: MathType?]
+	private unowned var owner: AnyNode
 
-	public init() {
+	public init(owner: AnyNode) {
 		self.variables = [:]
-		self.parentScope = nil
+		self.variableTypes = [:]
+		self.owner = owner
 	}
 
-	public subscript(key: String) -> MathValue? {
-		get {
-			variables[key] ?? parentScope?[key]
+	private func setType(_ name: String, type: MathType?) {
+		let oldType = variableTypes.updateValue(type, forKey: name)
+		if oldType != type {
+			owner.postTypeChange(of: name)
 		}
-		set {
-			variables[key] = newValue
+	}
+
+	/*
+	Declares a new variable with an optional type. Does not yet assign a value.
+	If a value is already present, it is deleted if the type is different to `type`
+	*/
+	public func declare(_ name: String, type: MathType?) {
+		setType(name, type: type)
+		if variables[name]?.type != type {
+			variables.removeValue(forKey: name)
 		}
 	}
 
-	func inScope(_ parent: VariableContainer?) -> Self {
-		self.parentScope = parent
-		return self
+	/*
+	Sets a variable to a value in the current scope. Automatically calls declare()
+	*/
+	public func set(_ name: String, to value: MathValue) {
+		setType(name, type: value.type)
+		variables[name] = value
 	}
 
-	public func listVariables() -> [String] {
-		let keys = variables.keys
-		let parentList = parentScope?.listVariables().filter({ !keys.contains($0) }) ?? []
+	/*
+	Retrieves the value of a variable if it exists.
+	Walks the scope chain if necessary
+	*/
+	public func get(_ name: String) -> MathValue? {
+		variables[name] ?? owner.parent?.variables.get(name)
+	}
 
-		return parentList + keys
+	/*
+	Deletes a declared/defined variable in the current scope
+	*/
+	public func delete(_ name: String) {
+		if let _ = variableTypes.removeValue(forKey: name) {
+			owner.postTypeChange(of: name)
+		}
+		deleteValue(name)
+	}
+
+	/*
+	Removes the value but keeps the declaration
+	*/
+	public func deleteValue(_ name: String) {
+		variables.removeValue(forKey: name)
+	}
+
+	/*
+	Retrieves any type information about a variable if available
+	*/
+	public func getType(_ name: String) -> MathType? {
+		variableTypes[name] ?? owner.parent?.variables.getType(name)
+	}
+
+	/*
+	Lists all declared variables available in the current scope.
+	Hides shadowed variables. Results start with current scope.
+	*/
+	public func listDeclared() -> [String] {
+		var namesSet = Set(variableTypes.keys)
+		var names = Array(variableTypes.keys)
+
+		let parentVariables = owner.parent?.variables.listDeclared().filter({ !namesSet.contains($0) }) ?? []
+		namesSet.formUnion(parentVariables)
+		names.append(contentsOf: parentVariables)
+
+		return names
+	}
+
+	public func export() -> [String: MathValue] { variables	}
+
+	public func `import`(_ values: [String: MathValue]) {
+		for (k, v) in values {
+			set(k, to: v)
+		}
 	}
 }

@@ -20,13 +20,13 @@ let commands: [Command] = [
 		}
 	},
 	Command(["n", "new", "c", "clear"], description: "Starts a new equation. Keeps global variables") {
-		let globals = parser.root.variables.variables
+		let globals = parser.root.variables.export()
 		parser.clear()
-		parser.root.variables.variables = globals
+		parser.root.variables.import(globals)
 	},
 	Command(["s", "store"], description: "Stores current result in variable <arg>") { name in
 		if let result = try? parser.root.evaluate() {
-			(parser.root as! Node<ExpressionNode>).localVariables[name] = result
+			(parser.root as! Node<ExpressionNode>).variables.set(name, to: result)
 			lastResult = "Stored result in variable '\(name)'".colored(.green)
 		}
 		else {
@@ -47,7 +47,13 @@ let commands: [Command] = [
 	Command(["v", "vars"], description: "Shows all available variables") {
 		guard let node = parser.current else { return }
 
-		lastResult = node.variables.listVariables().joined(separator: "\n")
+		lastResult = node.variables
+			.listDeclared()
+			.map {
+				let type = node.variables.getType($0)
+				return "\($0)    : \(type != nil ? String(describing: type!) : "unknown")"
+			}
+			.joined(separator: "\n")
 	},
 	Command(["r", "remove"], description: "Remove selected expression") {
 		parser.erase()
@@ -73,7 +79,7 @@ func executeCommand(_ input: String) {
 }
 
 calcLoop: while true {
-	print(TerminalString.Cursor.clearScreen, TerminalString.Cursor.move(), separator: "", terminator: "")
+	//print(TerminalString.Cursor.clearScreen, TerminalString.Cursor.move(), separator: "", terminator: "")
 	print("SwiftMath Calculator".styled([.bold]))
 	print("Exit with", ":q".colored(.cyan), "Help with", ":h".colored(.cyan))
 	print()

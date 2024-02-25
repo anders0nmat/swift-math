@@ -4,19 +4,50 @@ public struct IterateNode: ContextEvaluable {
 	public let initialValue: MathNumber
 	public var identifier: String
 
-	var varName = Argument()
+	var varName = Argument() {
+		didSet {
+			if let oldName = try? oldValue.evaluate().asIdentifier() {
+				expression.node.variables.delete(oldName)
+			}
+			if let newName = try? varName.evaluate().asIdentifier() {
+				let varType: MathType? = switch start.evaluateType() {
+					case .number: MathType.number
+					case .list(let elementType): elementType
+					default: nil
+				}
+				expression.node.variables.declare(newName, type: varType)
+			}
+		}
+	}
 	var start = Argument() {
 		didSet {
-			if case .list(_) = start.evaluateType() {
+			if case .list(let elementType) = start.evaluateType() {
 				self.arguments.argumentsPath = [\.varName, \.start, \.expression]
+				if let name = try? varName.evaluate().asIdentifier() {
+					expression.node.variables.declare(name, type: elementType)
+				}
 			}
 			else {
 				self.arguments.argumentsPath = [\.varName, \.start, \.end, \.expression]
+				if let name = try? varName.evaluate().asIdentifier() {
+					expression.node.variables.declare(name, type: .number)
+				}
 			}
 		}
 	}
 	var end = Argument()
-	var expression = Argument()
+	var expression = Argument() {
+		didSet {
+			if let name = try? varName.evaluate().asIdentifier() {
+				let varType: MathType? = switch start.evaluateType() {
+					case .number: MathType.number
+					case .list(let elementType): elementType
+					default: nil
+				}
+				expression.node.variables.declare(name, type: varType)
+			}
+		}
+	}
 
 	public var arguments = ArgumentPaths(
 		arguments: \.varName, \.start, \.end, \.expression
@@ -26,6 +57,11 @@ public struct IterateNode: ContextEvaluable {
 		self.identifier = identifier
 		self.reducer = reducer
 		self.initialValue = initialValue
+	}
+
+	public func postChange(in node: AnyNode) -> Bool {
+		guard let name = try? varName.evaluate().asIdentifier() else { return false }
+		
 	}
 
     public func evaluate(in context: Node<IterateNode>) throws -> MathValue {
@@ -46,10 +82,11 @@ public struct IterateNode: ContextEvaluable {
 
 		var total = initialValue
 		for item in items {
-			context.variables[name] = item
+			expression.node.variables.set(name, to: item)
 
 			total = try reducer(total, expression.evaluate().asNumber())
 		}
+		expression.node.variables.deleteValue(name)
 
 		return .number(total)
     }	

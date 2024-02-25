@@ -15,13 +15,17 @@ public struct VariableNode: ContextEvaluable {
 	}
 
 	public func evaluate(in context: Node<Self>) throws -> MathValue {
-		if let value = context.variables[name] {
+		if let value = context.variables.get(name) {
 			return value
 		}
 		throw MathError.missingVariable(name: name)
 	}
 
 	public func evaluateType(in context: Node<VariableNode>) -> MathType? {
-		context.variables[name]?.type
+		context.variables.getType(name)
+	}
+
+	public func postTypeChange(of variable: String) -> Bool {
+		variable == name
 	}
 }
