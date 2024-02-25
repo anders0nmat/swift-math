@@ -13,7 +13,7 @@ public final class VariableContainer {
 	private func setType(_ name: String, type: MathType?) {
 		let oldType = variableTypes.updateValue(type, forKey: name)
 		if oldType != type {
-			owner.postTypeChange(of: name)
+			owner.contextChanged()
 		}
 	}
 
@@ -49,7 +49,7 @@ public final class VariableContainer {
 	*/
 	public func delete(_ name: String) {
 		if let _ = variableTypes.removeValue(forKey: name) {
-			owner.postTypeChange(of: name)
+			owner.contextChanged()
 		}
 		deleteValue(name)
 	}
@@ -59,6 +59,22 @@ public final class VariableContainer {
 	*/
 	public func deleteValue(_ name: String) {
 		variables.removeValue(forKey: name)
+	}
+
+	/*
+	Clears values and declarations
+	*/
+	public func clear() {
+		variables = [:]
+		variableTypes = [:]
+		owner.contextChanged()
+	}
+
+	/*
+	Clears all values but keeps declarations
+	*/
+	public func clearValues() {
+		variables = [:]
 	}
 
 	/*

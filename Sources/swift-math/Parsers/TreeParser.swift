@@ -127,7 +127,7 @@ public final class TreeParser {
 				return nextChild(of: children[children.index(after: idx)], from: .parent)
 			}
 			else {
-				if let restList = node.restNodes, !node.hasPriority {
+				if let restList = node.restArgument?.nodeList, !node.hasPriority {
 					if child === restList.last, child is Node<EmptyNode> {
 						node.children.removeLast()
 					}
@@ -166,13 +166,13 @@ public final class TreeParser {
 			return node
 		case .child(let child):
 			if let idx = children.firstIndex(where: { $0 === child }), idx > children.startIndex {
-				if node.restNodes?.last === child, child is Node<EmptyNode> {
+				if node.restArgument?.nodeList.last === child, child is Node<EmptyNode> {
 					node.children.removeLast()
 				}
 				return prevChild(of: children[children.index(before: idx)], from: .parent)
 			}
 			else if let parent = node.parent {
-				if let restList = node.restNodes, child === restList.last, child is Node<EmptyNode> {
+				if let restList = node.restArgument?.nodeList, child === restList.last, child is Node<EmptyNode> {
 					node.children.removeLast()
 				}
 

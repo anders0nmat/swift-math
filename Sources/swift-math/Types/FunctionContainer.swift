@@ -4,7 +4,7 @@ public struct FunctionContainer {
 	public typealias CallSignature = [MathType]
 	public typealias FunctionDelegator = (_ args: [MathValue]) throws -> MathValue
 	public struct Function {
-		var returnType: MathType
+		var returnType: MathType?
 		var function: FunctionDelegator
 	}
 
@@ -32,12 +32,23 @@ public struct FunctionContainer {
 		}
 	}
 
-	private func signatureFits(generic: CallSignature, concrete: CallSignature) -> Bool {
-		guard generic.count == concrete.count else { return false }
+	private func signatureFits(generic: CallSignature, concrete: CallSignature) -> [MathGeneric.Identifier: MathType]? {
+		guard generic.count == concrete.count else { return nil }
 
 		var typeBindings: [MathGeneric.Identifier: MathType] = [:]
 
-		return zip(generic, concrete).allSatisfy { typeMatches(g: $0.0, c: $0.1, pinned: &typeBindings) }
+		if zip(generic, concrete).allSatisfy({ typeMatches(g: $0.0, c: $0.1, pinned: &typeBindings) }) {
+			return typeBindings
+		}
+		return nil
+	}
+
+	private func replaceGenerics(of type: MathType?, with table: [MathGeneric.Identifier:MathType]) -> MathType? {
+		switch type {
+			case .generic(let idx): return table[idx]
+			case .list(let ty): return .list(replaceGenerics(of: ty, with: table))
+			default: return type
+		}
 	}
 
 	public func getFunction(for argumentTypes: CallSignature) -> Function? {
@@ -45,7 +56,15 @@ public struct FunctionContainer {
 			return fn
 		}
 
-		return overloads.first { signatureFits(generic: $0.0, concrete: argumentTypes) }?.value
+		for e in overloads {
+			if let pinnedTypes = signatureFits(generic: e.key, concrete: argumentTypes) {
+				var fn = e.value
+				fn.returnType = replaceGenerics(of: fn.returnType, with: pinnedTypes)
+				return fn
+			}
+		}
+
+		return nil
 	}
 
 	public mutating func addFunction(signature: CallSignature, function: Function) {
@@ -75,7 +94,7 @@ public struct FunctionContainer {
 	}
 
 	public func evaluateType(_ nodes: [AnyNode]) -> MathType? {
-		evaluateType(nodes.map({ $0.evaluateType() }))
+		evaluateType(nodes.map({ $0.returnType }))
 	}
 
 	public func evaluateType(_ values: [MathType?]) -> MathType? {

@@ -10,7 +10,8 @@ public struct MathArgument {
 	}
 
 	func evaluate() throws -> MathValue { try node.evaluate() }
-	func evaluateType() -> MathType? { node.evaluateType() }
+	var returnType: MathType? { node.returnType }
+	var variables: VariableContainer { node.variables }
 }
 
 public struct MathArgumentList {
@@ -25,6 +26,12 @@ public struct MathArgumentPaths<T> {
 	public var prefixPath: MathArgumentKey<T>?
 	public var argumentsPath: [MathArgumentKey<T>]
 	public var restPath: MathArgumentListKey<T>?
+
+	public var hasPrefix: Bool { prefixPath != nil }
+	public var hasArguments: Bool { !argumentsPath.isEmpty }
+	public var hasRest: Bool { restPath != nil }
+
+	public var argumentCount: Int { argumentsPath.count }
 
 	public init(prefix: MathArgumentKey<T>? = nil, arguments: MathArgumentKey<T>..., rest: MathArgumentListKey<T>? = nil) {
 		self.prefixPath = prefix

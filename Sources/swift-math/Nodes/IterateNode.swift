@@ -4,50 +4,10 @@ public struct IterateNode: ContextEvaluable {
 	public let initialValue: MathNumber
 	public var identifier: String
 
-	var varName = Argument() {
-		didSet {
-			if let oldName = try? oldValue.evaluate().asIdentifier() {
-				expression.node.variables.delete(oldName)
-			}
-			if let newName = try? varName.evaluate().asIdentifier() {
-				let varType: MathType? = switch start.evaluateType() {
-					case .number: MathType.number
-					case .list(let elementType): elementType
-					default: nil
-				}
-				expression.node.variables.declare(newName, type: varType)
-			}
-		}
-	}
-	var start = Argument() {
-		didSet {
-			if case .list(let elementType) = start.evaluateType() {
-				self.arguments.argumentsPath = [\.varName, \.start, \.expression]
-				if let name = try? varName.evaluate().asIdentifier() {
-					expression.node.variables.declare(name, type: elementType)
-				}
-			}
-			else {
-				self.arguments.argumentsPath = [\.varName, \.start, \.end, \.expression]
-				if let name = try? varName.evaluate().asIdentifier() {
-					expression.node.variables.declare(name, type: .number)
-				}
-			}
-		}
-	}
+	var varName = Argument()
+	var start = Argument()
 	var end = Argument()
-	var expression = Argument() {
-		didSet {
-			if let name = try? varName.evaluate().asIdentifier() {
-				let varType: MathType? = switch start.evaluateType() {
-					case .number: MathType.number
-					case .list(let elementType): elementType
-					default: nil
-				}
-				expression.node.variables.declare(name, type: varType)
-			}
-		}
-	}
+	var expression = Argument()
 
 	public var arguments = ArgumentPaths(
 		arguments: \.varName, \.start, \.end, \.expression
@@ -59,9 +19,20 @@ public struct IterateNode: ContextEvaluable {
 		self.initialValue = initialValue
 	}
 
-	public func postChange(in node: AnyNode) -> Bool {
-		guard let name = try? varName.evaluate().asIdentifier() else { return false }
-		
+	public mutating func childrenChanged() {
+		expression.node.variables.clear()
+
+		guard let name = try? varName.evaluate().asIdentifier() else { return }
+
+		switch start.returnType {
+			case .list(let elementType):
+				expression.node.variables.declare(name, type: elementType)
+				arguments.argumentsPath = [\.varName, \.start, \.expression]
+				
+			default:
+				expression.node.variables.declare(name, type: .number)
+				arguments.argumentsPath = [\.varName, \.start, \.end, \.expression]
+		}
 	}
 
     public func evaluate(in context: Node<IterateNode>) throws -> MathValue {

@@ -39,7 +39,7 @@ public struct InfixNode: PriorityEvaluable {
 	}
 
 	public func evaluateType() -> MathType? {
-		let values = parts.nodeList.map { $0.evaluateType() }
+		let values = parts.nodeList.map { $0.returnType }
 		guard !values.contains(nil) else { return nil }
 		guard let first = values.first else { return nil }
 

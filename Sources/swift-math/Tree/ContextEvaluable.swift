@@ -43,6 +43,9 @@ public protocol ContextEvaluable {
 	Indicates the return type of evaluate() or `nil` if unknown
 	*/
 	func evaluateType(in context: Node<Self>) -> MathType?
+
+	mutating func childrenChanged()
+	mutating func contextChanged()
 }
 
 public extension ContextEvaluable {
@@ -72,5 +75,8 @@ public extension ContextEvaluable {
 	func makeNode() -> AnyNode { Node(self) }
 
 	func evaluateType(in context: Node<Self>) -> MathType? { nil }
+
+	mutating func childrenChanged() {}
+	mutating func contextChanged() {}
 }
 
