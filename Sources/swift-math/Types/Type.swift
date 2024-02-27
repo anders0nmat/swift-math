@@ -1,5 +1,5 @@
 
-public enum MathType: Equatable, Hashable {
+public enum MathType: Equatable, Hashable, CustomStringConvertible {
 	case number
 	case identifier
 	indirect case list(MathType?)
@@ -8,6 +8,15 @@ public enum MathType: Equatable, Hashable {
 
 	init<T: MathTypeConvertible>(rawValue: T) {	
 		self = T.mathType
+	}
+
+	public var description: String {
+		switch self {
+			case .number:       "number"
+			case .identifier:   "identifier"
+			case .list(let el): "list(\(el != nil ? String(describing: el!) : "nil"))"
+			case .generic(_):   "generic"
+		}
 	}
 }
 

@@ -51,7 +51,11 @@ let commands: [Command] = [
 			.listDeclared()
 			.map {
 				let type = node.variables.getType($0)
-				return "\($0)    : \(type != nil ? String(describing: type!) : "unknown")"
+				var value = ""
+				if let v = node.variables.get($0) {
+					value = " = \(v)"
+				}
+				return "\($0) : \(type != nil ? String(describing: type!) : "unknown")" + value
 			}
 			.joined(separator: "\n")
 	},
@@ -79,7 +83,7 @@ func executeCommand(_ input: String) {
 }
 
 calcLoop: while true {
-	//print(TerminalString.Cursor.clearScreen, TerminalString.Cursor.move(), separator: "", terminator: "")
+	print(TerminalString.Cursor.clearScreen, TerminalString.Cursor.move(), separator: "", terminator: "")
 	print("SwiftMath Calculator".styled([.bold]))
 	print("Exit with", ":q".colored(.cyan), "Help with", ":h".colored(.cyan))
 	print()
