@@ -1,33 +1,52 @@
 
-public struct InfixNode: Evaluable {
-	public typealias Reducer = (MathFloat, MathFloat) -> MathFloat
-
+public struct InfixNode: PriorityEvaluable {	
 	public internal(set) var priority: UInt
-	internal var reducer: Reducer
+	public var identifier: String
+	public var arguments = ArgumentPaths(rest: \.parts)
 
-	public init(priority: UInt, reducer: @escaping Reducer) {
+	var functions: FunctionContainer
+	var parts = ArgumentList()
+
+	public init(priority: UInt, identifier: String, functions: FunctionContainer.Visitor) {
 		self.priority = priority
-		self.reducer = reducer
+		self.functions = FunctionContainer()
+		self.identifier = identifier
+
+		functions(&self.functions)
 	}
 
-	public func evaluate(node: Node) -> MathResult {
-		var numbers: [MathFloat] = []
+	public func merge(with other: any PriorityEvaluable) -> (any PriorityEvaluable)? {
+		guard let other = other as? InfixNode else { return nil }
+		guard other.priority == priority else { return nil }
+		guard other.identifier == identifier else { return nil }
 
-		for child in node.children {
-			switch child.evaluate() {
-				case .success(let value):
-					switch value {
-						case .number(let number): numbers.append(number)
-						default: return .failure(.argumentType()) 
-					}
-				case .failure(let error): return .failure(error)
-			}
+		var new = self
+		new.parts.nodeList = other.parts.nodeList + self.parts.nodeList
+		return new
+	}
+
+	public func evaluate() throws -> MathValue {
+		let values = try parts.nodeList.map { try $0.evaluate() }
+		guard let first = values.first else {
+			throw MathError.missingArgument
 		}
 
-		switch numbers.count {
-			case 1: return .success(.number(numbers.first!))
-			case let x where x > 1: return .success(.number(numbers.suffix(from: 1).reduce(numbers.first!, reducer)))
-			default: return .failure(.evalError(message: "No arguments"))
-		}
+		if values.count == 1 { return first }
+
+		return try values
+			.dropFirst()
+			.reduce(first) { try functions.evaluate([$0, $1])}
+	}
+
+	public func evaluateType() -> MathType? {
+		let values = parts.nodeList.map { $0.returnType }
+		guard !values.contains(nil) else { return nil }
+		guard let first = values.first else { return nil }
+
+		if values.count == 1 { return first }
+
+		return values
+			.dropFirst()
+			.reduce(first!) { functions.evaluateType([$0, $1!]) }
 	}
 }
