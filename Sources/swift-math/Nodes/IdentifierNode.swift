@@ -1,7 +1,7 @@
 
 public struct IdentifierNode: Evaluable {
 	public var identifier: String { "#identifier" }
-	public var name: String
+	public let name: String
 
 	public init(_ identifier: String) {
 		self.name = identifier

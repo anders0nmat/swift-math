@@ -79,10 +79,10 @@ public final class TreeParser {
 	/* Token Parsing */
 
 	internal func getHead(from node: AnyNode) -> AnyNode {
-		if node.argumentCount > 0 {
-			return node.children[node.hasPrefix ? 1 : 0]
+		if node.arguments.argumentCount > 0 {
+			return node.children[node.arguments.hasPrefix ? 1 : 0]
 		}
-		else if node.hasRest {
+		else if node.arguments.hasRest {
 			node.children.append(Node.empty())
 			return node.children.last!
 		}
@@ -115,7 +115,7 @@ public final class TreeParser {
 			if let firstChild = children.first {
 				return nextChild(of: firstChild, from: .parent)
 			}
-			else if node.hasRest {
+			else if node.arguments.hasRest {
 				node.children.append(Node.empty())
 				return node.children.last!
 			}
@@ -127,7 +127,7 @@ public final class TreeParser {
 				return nextChild(of: children[children.index(after: idx)], from: .parent)
 			}
 			else {
-				if let restList = node.restArgument?.nodeList, !node.hasPriority {
+				if let restList = node.arguments.restArgument?.nodeList, !node.arguments.hasPriority {
 					if child === restList.last, child is Node<EmptyNode> {
 						node.children.removeLast()
 					}
@@ -149,7 +149,7 @@ public final class TreeParser {
 		
 		switch origin {
 		case .here:
-			if node.hasRest && !node.hasPriority {
+			if node.arguments.hasRest && !node.arguments.hasPriority {
 				node.children.append(Node.empty())
 				return node.children.last!	
 			}
@@ -166,13 +166,13 @@ public final class TreeParser {
 			return node
 		case .child(let child):
 			if let idx = children.firstIndex(where: { $0 === child }), idx > children.startIndex {
-				if node.restArgument?.nodeList.last === child, child is Node<EmptyNode> {
+				if node.arguments.restArgument?.nodeList.last === child, child is Node<EmptyNode> {
 					node.children.removeLast()
 				}
 				return prevChild(of: children[children.index(before: idx)], from: .parent)
 			}
 			else if let parent = node.parent {
-				if let restList = node.restArgument?.nodeList, child === restList.last, child is Node<EmptyNode> {
+				if let restList = node.arguments.restArgument?.nodeList, child === restList.last, child is Node<EmptyNode> {
 					node.children.removeLast()
 				}
 
@@ -222,7 +222,7 @@ public final class TreeParser {
 		let opPrio = op.priority
 
 		// Travel up until parent is lower-prio or non-prio operation
-		while let currPrio = current?.parent?.priority, currPrio >= opPrio {
+		while let currPrio = current?.parent?.arguments.priority, currPrio >= opPrio {
 			/* Force unwrap reasoning:
 			- currPrio succeeded
 			- Therefore current must not be nil
@@ -274,7 +274,7 @@ public final class TreeParser {
 		// Now insert...
 		let newNode = op.makeNode()
 
-		if newNode.hasPrefix {
+		if newNode.arguments.hasPrefix {
 			if current is Node<EmptyNode> {
 				// TODO: Allow prefix arguments to be empty?
 				throw ParseError.unexpectedHead

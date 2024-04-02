@@ -1,11 +1,11 @@
 
 public struct PrefixFunctionNode: Evaluable {
-	var prefixArg = Argument()
-	var args: [Argument]
-	var functions: FunctionContainer
+	public internal(set) var prefixArg = Argument()
+	public internal(set) var args: [Argument]
+	public internal(set) var functions: FunctionContainer
 
-	public var arguments: ArgumentPaths
-	public var identifier: String
+	public internal(set) var arguments: ArgumentPaths
+	public let identifier: String
 
 	public init(identifier: String, arguments: [Argument], functions: FunctionContainer.Visitor) {
 		self.identifier = identifier

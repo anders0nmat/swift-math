@@ -2,12 +2,12 @@
 public struct IterateNode: ContextEvaluable {
 	public let reducer: (MathNumber, MathNumber) -> MathNumber
 	public let initialValue: MathNumber
-	public var identifier: String
+	public let identifier: String
 
-	var varName = Argument()
-	var start = Argument()
-	var end = Argument()
-	var expression = Argument()
+	public internal(set) var varName = Argument()
+	public internal(set) var start = Argument()
+	public internal(set) var end = Argument()
+	public internal(set) var expression = Argument()
 
 	public var arguments = ArgumentPaths(
 		arguments: \.varName, \.start, \.end, \.expression

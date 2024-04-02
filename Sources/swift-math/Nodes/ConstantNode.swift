@@ -1,8 +1,8 @@
 
 public struct ConstantNode: Evaluable {
-	public private(set) var value: MathValue
-	public var displayName: String
-	public var identifier: String
+	public let value: MathValue
+	public let displayName: String
+	public let identifier: String
 
 	public init<T: MathTypeConvertible>(_ value: T, displayName: String, identifier: String) {
 		self.value = value.mathValue

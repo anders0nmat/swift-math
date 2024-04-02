@@ -1,8 +1,8 @@
 
 public struct ExpressionNode: Evaluable {
 	public var identifier: String { "#expression" }
-	internal var expr = Argument()
-	public var arguments = ArgumentPaths(arguments: \.expr)
+	public internal(set) var expr = Argument()
+	public let arguments = ArgumentPaths(arguments: \.expr)
 
 	public func evaluate() throws -> MathValue { try expr.evaluate() }
 	public func evaluateType() -> MathType? { expr.returnType }

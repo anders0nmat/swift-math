@@ -29,6 +29,13 @@ public final class VariableContainer {
 	}
 
 	/*
+	Indicates if variable is known in scope
+	*/
+	public func isDeclared(_ name: String) -> Bool {
+		variableTypes.keys.contains(name)
+	}
+
+	/*
 	Sets a variable to a value in the current scope. Automatically calls declare()
 	*/
 	public func set(_ name: String, to value: MathValue) {

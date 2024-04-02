@@ -56,6 +56,10 @@ public extension ContextEvaluable {
 	*/
 
 	var arguments: ArgumentPaths { ArgumentPaths() }
+	/*var argumentNodes: [AnyNode] {
+		get { self.arguments.getNodes(from: self) }
+		set { self.arguments.setNodes(of: &self, to: newValue) }
+	}*/
 
 	mutating func customize(using arguments: [String]) -> Bool { true }
 
@@ -77,6 +81,6 @@ public extension ContextEvaluable {
 	func evaluateType(in context: Node<Self>) -> MathType? { nil }
 
 	mutating func childrenChanged() {}
-	mutating func contextChanged() {}
+	mutating func contextChanged() {}	
 }
 

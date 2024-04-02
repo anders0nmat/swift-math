@@ -4,8 +4,8 @@ public struct InfixNode: PriorityEvaluable {
 	public var identifier: String
 	public var arguments = ArgumentPaths(rest: \.parts)
 
-	var functions: FunctionContainer
-	var parts = ArgumentList()
+	public internal(set) var functions: FunctionContainer
+	public internal(set) var parts = ArgumentList()
 
 	public init(priority: UInt, identifier: String, functions: FunctionContainer.Visitor) {
 		self.priority = priority

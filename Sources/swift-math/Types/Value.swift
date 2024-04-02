@@ -30,4 +30,8 @@ public enum MathValue: Equatable, CustomStringConvertible {
 	func asType<T: MathTypeConvertible>() throws -> T {
 		try T(value: self)
 	}
+
+	func cast<T: MathTypeConvertible>(to type: T.Type) throws -> T {
+		try T(value: self)
+	}
 }

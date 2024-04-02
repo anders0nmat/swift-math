@@ -3,7 +3,7 @@ public struct ListNode: Evaluable {
 	public var identifier: String { "#list" }
 	public var arguments = ArgumentPaths(rest: \.entries)
 
-	var entries = ArgumentList()
+	public internal(set) var entries = ArgumentList()
 
 	public init() {}
 
@@ -21,7 +21,7 @@ public struct ListNode: Evaluable {
 		if entries.nodeList.isEmpty {
 			return .list(nil)
 		}
-		let entryType = entries.nodeList.map { $0.evaluateType() }
+		let entryType = entries.nodeList.map { $0.returnType }
 		if let firstType = entryType.first, let firstType, entryType.allSatisfy({ $0 == firstType }) {
 			return .list(firstType)
 		}
