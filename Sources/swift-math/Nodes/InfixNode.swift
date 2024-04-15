@@ -14,15 +14,14 @@ public struct InfixNode: PriorityEvaluable {
 
 		functions(&self.functions)
 	}
+	
+	public mutating func merge(with other: InfixNode) -> Bool {
+		guard other.priority == priority else { return false }
+		guard other.identifier == identifier else { return false }
 
-	public func merge(with other: any PriorityEvaluable) -> (any PriorityEvaluable)? {
-		guard let other = other as? InfixNode else { return nil }
-		guard other.priority == priority else { return nil }
-		guard other.identifier == identifier else { return nil }
+		self.parts.nodeList += other.parts.nodeList
 
-		var new = self
-		new.parts.nodeList = other.parts.nodeList + self.parts.nodeList
-		return new
+		return true
 	}
 
 	public func evaluate() throws -> MathValue {
@@ -50,3 +49,5 @@ public struct InfixNode: PriorityEvaluable {
 			.reduce(first!) { functions.evaluateType([$0, $1!]) }
 	}
 }
+
+

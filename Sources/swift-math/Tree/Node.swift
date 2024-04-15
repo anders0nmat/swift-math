@@ -6,9 +6,11 @@ public protocol _Node: AnyObject {
 	var parent: AnyNode? { get set }
 	var root: AnyNode { get }
 
-	var body: Body { get }
+	var body: Body { get set }
 	var arguments: Arguments { get }
 	var children: [AnyNode] { get set }
+
+	var observers: [NodeEventCallback] { get set }
 
 	var variables: VariableContainer { get }
 
@@ -28,6 +30,7 @@ public typealias AnyNode = any _Node
 public final class Node<Body: ContextEvaluable>: _Node {
 	public weak var parent: AnyNode?
 	public var root: AnyNode { parent?.root ?? self }
+	public var observers: [NodeEventCallback] = []
 	
 	internal var _body: Body
 	public var body: Body {
@@ -36,6 +39,7 @@ public final class Node<Body: ContextEvaluable>: _Node {
 			_body = newValue
 			linkChildren()
 			updateReturnType()
+			fire(event: .body)
 		}
 	}
 
@@ -123,6 +127,7 @@ public final class Node<Body: ContextEvaluable>: _Node {
 		
 		isChanging = false
 		updateReturnType()
+		fire(event: .children)
 	}
 
 	public func contextChanged() {
@@ -131,6 +136,7 @@ public final class Node<Body: ContextEvaluable>: _Node {
 		_body.contextChanged()
 
 		updateReturnType()
+		fire(event: .context)
 	}
 }
 

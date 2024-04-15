@@ -6,6 +6,7 @@ func flush() { fflush(stdout) }
 var debugDraw = false
 
 var lastResult = ""
+var events = [String]()
 
 let parser = TreeParser(operators: operators)
 let printer = NodePrinter()
@@ -37,10 +38,14 @@ let commands: [Command] = [
 		debugDraw.toggle()
 	},
 	Command(["e", "expr"], description: "Parse <arg> as one expression") { expr in
+		addObserver(to: parser.root)
+		events = []
 		try parser.parse(expression: expr)
 		lastResult = "Success!".colored(.green)
 	},
 	Command(["t", "token"], description: "Insert <arg> as a token") { command in
+		addObserver(to: parser.root)
+		events = []
 		try parser.parse(command: command)
 		lastResult = "Success!".colored(.green)
 	},
@@ -64,6 +69,10 @@ let commands: [Command] = [
 	},
 ]
 
+func treeCallback(node: AnyNode, event: NodeEvent) {
+	events.append("\(event) at \(node)")
+}
+
 func executeCommand(_ input: String) {
 	let parts = input.split(separator: " ", maxSplits: 1)
 	let command = String(parts[0])
@@ -80,6 +89,11 @@ func executeCommand(_ input: String) {
 	else {
 		lastResult = "Unknown Command: \(command)".colored(.red)
 	}
+}
+
+func addObserver(to tree: AnyNode) {
+	tree.observers = [treeCallback]
+	tree.children.forEach(addObserver)
 }
 
 calcLoop: while true {
@@ -102,6 +116,7 @@ calcLoop: while true {
 	print()
 
 	print(lastResult)
+	print(events.joined(separator: "\n"))
 	print(">> ", terminator: "")
 	flush()
 
@@ -113,6 +128,8 @@ calcLoop: while true {
 	}
 
 	do {
+		addObserver(to: parser.root)
+		events = []
 		try parser.parse(expression: input)
 
 		lastResult = "Success!".colored(.green)

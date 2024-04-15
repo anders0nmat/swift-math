@@ -233,10 +233,9 @@ public final class TreeParser {
 		guard let current else { throw ParseError.unexpectedHead }
 
 		let newNode: AnyNode
-		if let other = current.body as? any PriorityEvaluable, 
-		let mergedOp = op.merge(with: other) {
-			newNode = mergedOp.makeNode()
-			current.replaceSelf(with: newNode)
+
+		if current.mergeBody(with: op) {
+			newNode = current
 			newNode.children.append(Node.empty())
 		}
 		else {

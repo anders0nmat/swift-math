@@ -3,13 +3,31 @@ public protocol PriorityEvaluable: Evaluable {
 	var priority: UInt { get }
 
 	/*
-		Returns a merged version of `self` and `other` or `nil` if not possible.
-		Used to keep tree structure flat on infix operations which
-		usually come as binary operations
+		Merges `self` with `other` operator
+		
+		Result indicates success
 	*/
-	func merge(with other: any PriorityEvaluable) -> (any PriorityEvaluable)?
+	mutating func merge(with other: any PriorityEvaluable) -> Bool
+	mutating func merge(with other: Self) -> Bool
 }
 
-public extension PriorityEvaluable {
-	func merge(with other: any PriorityEvaluable) -> (any PriorityEvaluable)? { nil }
+extension PriorityEvaluable {
+	public mutating func merge(with other: any PriorityEvaluable) -> Bool {
+		guard let other = other as? Self else { return false }
+		return merge(with: other)
+	}
+
+	public mutating func merge(with other: Self) -> Bool { false }
+}
+
+extension _Node {
+	internal func mergeBody(with other: any PriorityEvaluable) -> Bool {
+		if
+		var body = self.body as? any PriorityEvaluable,
+		body.merge(with: other) {
+			self.body = body as! Body
+			return true
+		}
+		return false
+	}
 }
