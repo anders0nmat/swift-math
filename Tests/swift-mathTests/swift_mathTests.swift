@@ -20,10 +20,10 @@ final class TreeTest: XCTestCase {
 			InfixNode(priority: 40, identifier: "*") {
 				$0.addFunction(*)
 			},
-			PrefixFunctionNode(identifier: "/", arguments: [MathArgument()]) { 
+			PrefixFunctionNode(identifier: "/", arguments: [Argument()]) { 
 				$0.addFunction(/)
 			},
-			PrefixFunctionNode(identifier: "pow", arguments: [MathArgument()]) { 
+			PrefixFunctionNode(identifier: "pow", arguments: [Argument()]) { 
 				$0.addFunction(pow)
 			},
 
@@ -245,16 +245,16 @@ final class TreeTest: XCTestCase {
 		root.children = [id, var1, Node.empty(), child]
 		child.children = [id2, var2, Node.empty(), child2]
 
-		XCTAssertEqual(root.arguments.argumentCount, 4)
-		XCTAssertEqual(child.arguments.argumentCount, 4)
+		XCTAssertEqual(root.argumentCount, 4)
+		XCTAssertEqual(child.argumentCount, 4)
 
 		root.variables.declare("t", type: .list(.number))
-		XCTAssertEqual(root.arguments.argumentCount, 3)
-		XCTAssertEqual(child.arguments.argumentCount, 4)
+		XCTAssertEqual(root.argumentCount, 3)
+		XCTAssertEqual(child.argumentCount, 4)
 
 		root.variables.declare("t", type: .list(.list(.number)))
-		XCTAssertEqual(root.arguments.argumentCount, 3)
-		XCTAssertEqual(child.arguments.argumentCount, 3)
+		XCTAssertEqual(root.argumentCount, 3)
+		XCTAssertEqual(child.argumentCount, 3)
 	}
 
 	func testFindNodes() throws {

@@ -61,6 +61,8 @@ public final class Node<Body: ContextEvaluable>: _Node {
 			if let restPath {
 				_body[keyPath: restPath].nodeList = Array(iterator)
 			}
+
+			linkChildren()
 		}
 	}
 
