@@ -2,24 +2,8 @@
 public typealias AnyEvaluable = any ContextEvaluable
 
 public protocol ContextEvaluable {
-	typealias ArgumentPaths = MathArgumentPaths<Self>
-	typealias Argument = MathArgument
-	typealias ArgumentList = MathArgumentList
-
-	/*
-	Path to arguments the function requires
-
-	- Prefix: Argument that is immediately before the function itself
-	- Arguments: Any amount of single-expression arguments
-	- Rest: VarArg-like arguments, so zero or more expressions
-	*/
-	/*
-	var prefixPath: ArgumentKey<Self>? { get }
-	var argumentsPath: [ArgumentKey<Self>] { get }
-	var restPath: ArgumentListKey<Self>? { get }
-	*/
-
-	var arguments: ArgumentPaths { get }
+	typealias ArgumentPath = ArgumentContainer<Self>
+	var arguments: ArgumentPath { get }
 
 	/*
 	Unique identifier for this operation
@@ -49,17 +33,7 @@ public protocol ContextEvaluable {
 }
 
 public extension ContextEvaluable {
-	/*
-	var prefixPath: ArgumentKey<Self>? { nil }
-	var argumentsPath: [ArgumentKey<Self>] { [] }
-	var restPath: ArgumentListKey<Self>? { nil }
-	*/
-
-	var arguments: ArgumentPaths { ArgumentPaths() }
-	/*var argumentNodes: [AnyNode] {
-		get { self.arguments.getNodes(from: self) }
-		set { self.arguments.setNodes(of: &self, to: newValue) }
-	}*/
+	var arguments: ArgumentPath { ArgumentPath() }
 
 	mutating func customize(using arguments: [String]) -> Bool { true }
 

@@ -19,10 +19,10 @@ let operators: [AnyEvaluable] = [
 	InfixNode(priority: 40, identifier: "*") {
 		$0.addFunction(*)
 	},
-	PrefixFunctionNode(identifier: "/", arguments: [MathArgument()]) { 
+	PrefixFunctionNode(identifier: "/", arguments: [Argument()]) { 
 		$0.addFunction(/)
 	},
-	PrefixFunctionNode(identifier: "pow", arguments: [MathArgument()]) { 
+	PrefixFunctionNode(identifier: "pow", arguments: [Argument()]) { 
 		$0.addFunction(pow)
 	},
 

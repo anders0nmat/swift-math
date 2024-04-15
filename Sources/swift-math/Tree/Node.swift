@@ -1,13 +1,11 @@
 
 public protocol _Node: AnyObject {
 	associatedtype Body: ContextEvaluable
-	associatedtype Arguments: MathArgumentInfo
 
 	var parent: AnyNode? { get set }
 	var root: AnyNode { get }
 
 	var body: Body { get set }
-	var arguments: Arguments { get }
 	var children: [AnyNode] { get set }
 
 	var observers: [NodeEventCallback] { get set }
@@ -43,15 +41,26 @@ public final class Node<Body: ContextEvaluable>: _Node {
 		}
 	}
 
-	public var arguments: MathNodeArguments<Body> {
-		MathNodeArguments(argumentPaths: body.arguments, node: self)
-	}
-
 	public var children: [AnyNode] {
-		get { arguments.nodes }
+		get {
+				(prefixNode.map { [$0] } ?? [])
+			+	(argumentNodes)
+			+	(restNodes ?? [])
+		}
 		set {
-			arguments.nodes = newValue
-			linkChildren()
+			var iterator = newValue.makeIterator()
+
+			if let prefixPath {
+				_body[keyPath: prefixPath].node = iterator.next() ?? Node<EmptyNode>.empty()
+			}
+
+			argumentPath.forEach {
+				_body[keyPath: $0].node = iterator.next() ?? Node<EmptyNode>.empty()
+			}
+
+			if let restPath {
+				_body[keyPath: restPath].nodeList = Array(iterator)
+			}
 		}
 	}
 

@@ -1,7 +1,7 @@
 
 public struct ListNode: Evaluable {
 	public var identifier: String { "#list" }
-	public var arguments = ArgumentPaths(rest: \.entries)
+	public var arguments = ArgumentPath(rest: \.entries)
 
 	public internal(set) var entries = ArgumentList()
 

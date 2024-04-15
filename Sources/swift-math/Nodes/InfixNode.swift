@@ -2,7 +2,7 @@
 public struct InfixNode: PriorityEvaluable {	
 	public internal(set) var priority: UInt
 	public var identifier: String
-	public var arguments = ArgumentPaths(rest: \.parts)
+	public var arguments = ArgumentPath(rest: \.parts)
 
 	public internal(set) var functions: FunctionContainer
 	public internal(set) var parts = ArgumentList()

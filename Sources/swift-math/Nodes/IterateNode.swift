@@ -9,7 +9,7 @@ public struct IterateNode: ContextEvaluable {
 	public internal(set) var end = Argument()
 	public internal(set) var expression = Argument()
 
-	public var arguments = ArgumentPaths(
+	public var arguments = ArgumentPath(
 		arguments: \.varName, \.start, \.end, \.expression
 	)
 

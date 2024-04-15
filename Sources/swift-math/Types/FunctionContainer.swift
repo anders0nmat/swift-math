@@ -71,7 +71,7 @@ public struct FunctionContainer {
 		overloads[signature] = function
 	}
 
-	public func evaluate(_ args: [MathArgument]) throws -> MathValue {
+	public func evaluate(_ args: [Argument]) throws -> MathValue {
 		try evaluate(args.map(\.node))
 	}
 
@@ -89,7 +89,7 @@ public struct FunctionContainer {
 		return try fn.function(values)
 	}
 
-	public func evaluateType(_ args: [MathArgument]) -> MathType? {
+	public func evaluateType(_ args: [Argument]) -> MathType? {
 		evaluateType(args.map(\.node))
 	}
 

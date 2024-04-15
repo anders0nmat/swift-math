@@ -3,13 +3,13 @@ public struct FunctionNode: Evaluable {
 	public internal(set) var args: [Argument]
 	public internal(set) var functions: FunctionContainer
 	
-	public internal(set) var arguments: ArgumentPaths
+	public internal(set) var arguments: ArgumentPath
 	public let identifier: String
 
 	public init(identifier: String, arguments: [Argument], functions: FunctionContainer.Visitor) {
 		self.identifier = identifier
 		self.args = arguments
-		self.arguments = ArgumentPaths()
+		self.arguments = ArgumentPath()
 		self.functions = FunctionContainer()
 
 		for idx in args.indices {
