@@ -63,6 +63,7 @@ public final class Node<Body: ContextEvaluable>: _Node {
 			}
 
 			linkChildren()
+			fire(event: .children)
 		}
 	}
 
