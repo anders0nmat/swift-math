@@ -27,7 +27,7 @@ let commands: [Command] = [
 	},
 	Command(["s", "store"], description: "Stores current result in variable <arg>") { name in
 		if let result = try? parser.root.evaluate() {
-			(parser.root as! Node<ExpressionNode>).variables.set(name, to: result)
+			(parser.root as! Node<Operator.Expression>).variables.set(name, to: result)
 			lastResult = "Stored result in variable '\(name)'".colored(.green)
 		}
 		else {

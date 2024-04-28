@@ -102,7 +102,7 @@ struct DefaultDisplay {
 }
 
 struct InfixDisplay: NodeDisplayable {
-	typealias Body = InfixNode
+	typealias Body = Operator.Infix
     func prettyDraw(node: Node<Body>, printer: (AnyNode) -> String) -> String {
 		node.children.map(printer).joined(separator: " \(node.body.identifier) ")
     }
@@ -116,7 +116,7 @@ struct InfixDisplay: NodeDisplayable {
 }
 
 struct NumberDisplay: NodeDisplayable {
-	typealias Body = NumberNode
+	typealias Body = Operator.Number
 	func prettyDraw(node: Node<Body>, printer: (AnyNode) -> String) -> String {
 		node.body.numberString
 	}
@@ -132,7 +132,7 @@ struct NumberDisplay: NodeDisplayable {
 }
 
 struct ExpressionDisplay: NodeDisplayable {
-	typealias Body = ExpressionNode
+	typealias Body = Operator.Expression
 	func prettyDraw(node: Node<Body>, printer: (AnyNode) -> String) -> String {
 		": " + printer(node.children[0])
 	}
@@ -145,7 +145,7 @@ struct ExpressionDisplay: NodeDisplayable {
 }
 
 struct EmptyDisplay: NodeDisplayable {
-	typealias Body = EmptyNode
+	typealias Body = Operator.Empty
 	func prettyDraw(node: Node<Body>, printer: (AnyNode) -> String) -> String {
 		"[---]"
 	}
@@ -156,7 +156,7 @@ struct EmptyDisplay: NodeDisplayable {
 }
 
 struct ConstantDisplay: NodeDisplayable {
-	typealias Body = ConstantNode
+	typealias Body = Operator.Constant
 	func prettyDraw(node: Node<Body>, printer: (AnyNode) -> String) -> String {
 		node.body.displayName
 	}
@@ -175,7 +175,7 @@ struct ConstantDisplay: NodeDisplayable {
 }
 
 struct ListDisplay: NodeDisplayable {
-	typealias Body = ListNode
+	typealias Body = Operator.List
 	func prettyDraw(node: Node<Body>, printer: (AnyNode) -> String) -> String {
 		"[\(node.children.map(printer).joined(separator: ", "))]"
 	}
@@ -186,7 +186,7 @@ struct ListDisplay: NodeDisplayable {
 }
 
 struct VariableDisplay: NodeDisplayable {
-	typealias Body = VariableNode
+	typealias Body = Operator.Variable
 	func prettyDraw(node: Node<Body>, printer: (AnyNode) -> String) -> String {
 		node.body.name
 	}
@@ -199,7 +199,7 @@ struct VariableDisplay: NodeDisplayable {
 }
 
 struct IdentifierDisplay: NodeDisplayable {
-	typealias Body = IdentifierNode
+	typealias Body = Operator.Identifier
 	func prettyDraw(node: Node<Body>, printer: (AnyNode) -> String) -> String {
 		"\"\(node.body.name)\""
 	}

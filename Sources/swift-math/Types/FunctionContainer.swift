@@ -16,7 +16,12 @@ public struct FunctionContainer {
 		self.overloads = [:]
 	}
 
-	private func typeMatches(g: MathType, c: MathType, pinned: inout [MathGeneric.Identifier: MathType]) -> Bool {
+	public init(visitor: Visitor) {
+		self.init()
+		visitor(&self)
+	}
+
+	private func typeMatches(g: MathType, c: MathType, pinned: inout [Type.Generic.Identifier: MathType]) -> Bool {
 		switch (g, c) {
 			case let (a, b) where a == b: return true
 			case (.list(_), .list(nil)): return true
@@ -32,10 +37,10 @@ public struct FunctionContainer {
 		}
 	}
 
-	private func signatureFits(generic: CallSignature, concrete: CallSignature) -> [MathGeneric.Identifier: MathType]? {
+	private func signatureFits(generic: CallSignature, concrete: CallSignature) -> [Type.Generic.Identifier: MathType]? {
 		guard generic.count == concrete.count else { return nil }
 
-		var typeBindings: [MathGeneric.Identifier: MathType] = [:]
+		var typeBindings: [Type.Generic.Identifier: MathType] = [:]
 
 		if zip(generic, concrete).allSatisfy({ typeMatches(g: $0.0, c: $0.1, pinned: &typeBindings) }) {
 			return typeBindings
@@ -43,7 +48,7 @@ public struct FunctionContainer {
 		return nil
 	}
 
-	private func replaceGenerics(of type: MathType?, with table: [MathGeneric.Identifier:MathType]) -> MathType? {
+	private func replaceGenerics(of type: MathType?, with table: [Type.Generic.Identifier:MathType]) -> MathType? {
 		switch type {
 			case .generic(let idx): return table[idx]
 			case .list(let ty): return .list(replaceGenerics(of: ty, with: table))

@@ -1,10 +1,13 @@
 
+// Namespace for types
+public enum Type {}
+
 public enum MathType: Equatable, Hashable, CustomStringConvertible {
 	case number
 	case identifier
 	indirect case list(MathType?)
 
-	case generic(MathGeneric.Identifier)
+	case generic(Type.Generic.Identifier)
 
 	init<T: MathTypeConvertible>(rawValue: T) {	
 		self = T.mathType
@@ -20,12 +23,13 @@ public enum MathType: Equatable, Hashable, CustomStringConvertible {
 	}
 }
 
-public typealias MathNumber = Double
-public typealias MathIdentifier = String
+public extension Type {
+	typealias Number = Double
+	typealias Identifier = String
+	typealias RawList<T: MathTypeConvertible> = Array<T>
+}
 
-public typealias RawMathList<T: MathTypeConvertible> = Array<T>
-
-public extension MathNumber {
+public extension Type.Number {
 	func asInt() throws -> Int {
 		if let i = Int(exactly: self) {
 			return i
@@ -34,42 +38,44 @@ public extension MathNumber {
 	}
 }
 
+public extension Type {
+	struct List: Equatable {
+		public private(set) var values: [MathValue]
+		public private(set) var elementType: MathType?
 
-public struct MathList: Equatable {
-	public private(set) var values: [MathValue]
-	public private(set) var elementType: MathType?
+		init() {
+			self.values = []
+			self.elementType = nil
+		}
 
-	init() {
-		self.values = []
-		self.elementType = nil
-	}
-
-	init(_ values: [MathValue]) throws {
-		self.values = values
-		if let firstType = self.values.first?.type {
-			if !self.values.map(\.type).allSatisfy({$0 == firstType}) {
-				throw MathError.valueError
+		init(_ values: [MathValue]) throws {
+			self.values = values
+			if let firstType = self.values.first?.type {
+				if !self.values.map(\.type).allSatisfy({$0 == firstType}) {
+					throw MathError.valueError
+				}
+				self.elementType = firstType
 			}
-			self.elementType = firstType
+		}
+
+		public init<T: MathTypeConvertible>(_ rawList: RawList<T>) {
+			try! self.init(rawList.map { MathValue(rawValue: $0) })
+			/*self.values = rawList.map { MathValue(rawValue: $0) }
+			self.elementType = T.mathType*/
+		}
+
+		mutating func append(_ newElement: MathValue) throws {
+			if let elementType, elementType != newElement.type {
+				throw MathError.unexpectedType(expected: elementType, found: newElement.type)
+			}
+			elementType = newElement.type
+			values.append(newElement)
 		}
 	}
 
-	public init<T: MathTypeConvertible>(_ rawList: RawMathList<T>) {
-		try! self.init(rawList.map { MathValue(rawValue: $0) })
-		/*self.values = rawList.map { MathValue(rawValue: $0) }
-		self.elementType = T.mathType*/
-	}
-
-	mutating func append(_ newElement: MathValue) throws {
-		if let elementType, elementType != newElement.type {
-			throw MathError.unexpectedType(expected: elementType, found: newElement.type)
-		}
-		elementType = newElement.type
-		values.append(newElement)
-	}
 }
 
-extension MathList: BidirectionalCollection {
+extension Type.List: BidirectionalCollection {
 	public typealias Index = [MathValue].Index
 	public typealias Element = [MathValue].Element
 
@@ -92,7 +98,7 @@ public protocol MathTypeConvertible {
 	init(value: MathValue) throws
 }
 
-extension MathNumber: MathTypeConvertible {
+extension Type.Number: MathTypeConvertible {
 	public static var mathType: MathType { .number }
 	public var mathValue: MathValue { .number(self) }
 
@@ -105,7 +111,7 @@ extension MathNumber: MathTypeConvertible {
 	}
 }
 
-extension MathIdentifier: MathTypeConvertible {
+extension Type.Identifier: MathTypeConvertible {
 	public static var mathType: MathType { .identifier }
 	public var mathValue: MathValue { .identifier(self) }
 
@@ -118,7 +124,7 @@ extension MathIdentifier: MathTypeConvertible {
 	}
 }
 
-extension MathList: MathTypeConvertible {
+extension Type.List: MathTypeConvertible {
 	public static var mathType: MathType { .list(nil) }
 	public var mathValue: MathValue { .list(self) }
 
@@ -131,9 +137,9 @@ extension MathList: MathTypeConvertible {
 	}
 }
 
-extension RawMathList: MathTypeConvertible {
+extension Type.RawList: MathTypeConvertible {
 	public static var mathType: MathType { .list(Element.mathType) }
-	public var mathValue: MathValue { .list(MathList(self)) }
+	public var mathValue: MathValue { .list(Type.List(self)) }
 
 	public init(value: MathValue) throws {
 		guard case let .list(v) = value else {

@@ -51,11 +51,11 @@ public final class Node<Body: ContextEvaluable>: _Node {
 			var iterator = newValue.makeIterator()
 
 			if let prefixPath {
-				_body[keyPath: prefixPath].node = iterator.next() ?? Node<EmptyNode>.empty()
+				_body[keyPath: prefixPath].node = iterator.next() ?? Operator.Empty.node()
 			}
 
 			argumentPath.forEach {
-				_body[keyPath: $0].node = iterator.next() ?? Node<EmptyNode>.empty()
+				_body[keyPath: $0].node = iterator.next() ?? Operator.Empty.node()
 			}
 
 			if let restPath {

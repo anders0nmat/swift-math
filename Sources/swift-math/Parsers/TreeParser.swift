@@ -131,7 +131,7 @@ public final class TreeParser {
 			}
 			else {
 				if let restList = node.restArgument?.nodeList, !node.hasPriority {
-					if child === restList.last, child is Node<EmptyNode> {
+					if child === restList.last, child is Node<Operator.Empty> {
 						node.children.removeLast()
 					}
 					else {
@@ -169,13 +169,13 @@ public final class TreeParser {
 			return node
 		case .child(let child):
 			if let idx = children.firstIndex(where: { $0 === child }), idx > children.startIndex {
-				if node.restArgument?.nodeList.last === child, child is Node<EmptyNode> {
+				if node.restArgument?.nodeList.last === child, child is Node<Operator.Empty> {
 					node.children.removeLast()
 				}
 				return prevChild(of: children[children.index(before: idx)], from: .parent)
 			}
 			else if let parent = node.parent {
-				if let restList = node.restArgument?.nodeList, child === restList.last, child is Node<EmptyNode> {
+				if let restList = node.restArgument?.nodeList, child === restList.last, child is Node<Operator.Empty> {
 					node.children.removeLast()
 				}
 
@@ -195,7 +195,7 @@ public final class TreeParser {
 		}
 
 		switch current {
-			case is Node<EmptyNode>:
+			case is Node<Operator.Empty>:
 				let insertString: String
 				switch arg {
 					case "+-": insertString = "-"
@@ -204,11 +204,11 @@ public final class TreeParser {
 						insertString = num
 					default: throw ParseError.unknownToken(token)
 				}
-				let newOp = NumberNode(insertString)
+				let newOp = Operator.Number(insertString)
 				let newNode = newOp.makeNode()
 				current!.replaceSelf(with: newNode)
 				self.current = newNode
-			case let number as Node<NumberNode>:
+			case let number as Node<Operator.Number>:
 				switch arg {
 					case "+-": number.body.negate()
 					case ".": number.body.fraction()
@@ -262,7 +262,7 @@ public final class TreeParser {
 			throw ParseError.customizationFailed(for: token.args, on: op)
 		}
 
-		if op is NumberNode {
+		if op is Operator.Number {
 			try processNumber(token)
 			return
 		}
@@ -277,7 +277,7 @@ public final class TreeParser {
 		let newNode = op.makeNode()
 
 		if newNode.hasPrefix {
-			if current is Node<EmptyNode> {
+			if current is Node<Operator.Empty> {
 				// TODO: Allow prefix arguments to be empty?
 				throw ParseError.unexpectedHead
 			}
@@ -288,7 +288,7 @@ public final class TreeParser {
 			}
 		}
 		else {
-			if current is Node<EmptyNode> {
+			if current is Node<Operator.Empty> {
 				current.replaceSelf(with: newNode)
 
 				self.current = getHead(from: newNode)

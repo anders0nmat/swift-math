@@ -1,8 +1,8 @@
 
 public enum MathValue: Equatable, CustomStringConvertible {
-	case number(MathNumber)
-	case identifier(MathIdentifier)
-	case list(MathList)
+	case number(Type.Number)
+	case identifier(Type.Identifier)
+	case list(Type.List)
 
 	init<T: MathTypeConvertible>(rawValue: T) {
 		self = rawValue.mathValue
@@ -16,8 +16,8 @@ public enum MathValue: Equatable, CustomStringConvertible {
 		}
 	}
 
-	func asNumber() throws -> MathNumber { try asType() }
-	func asIdentifier() throws -> MathIdentifier { try asType() }
+	func asNumber() throws -> Type.Number { try asType() }
+	func asIdentifier() throws -> Type.Identifier { try asType() }
 
 	public var description: String {
 		switch self {

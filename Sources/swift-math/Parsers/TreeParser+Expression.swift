@@ -165,7 +165,7 @@ extension TreeParser {
 				}
 			case let .symbol(symbol):
 				// Assume operator?
-				if self.current is Node<EmptyNode>, symbol == "-" {
+				if self.current is Node<Operator.Empty>, symbol == "-" {
 					try processToken(Token("#number", ["+-"]))	
 				}
 				else {
@@ -188,7 +188,7 @@ extension TreeParser {
 			case .startList:
 				try processToken(Token("#list"))
 			case .endList:
-				if let parent = self.current?.parent as? Node<ListNode> {
+				if let parent = self.current?.parent as? Node<Operator.List> {
 					self.current = parent
 				}
 				else {

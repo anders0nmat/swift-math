@@ -1,29 +1,31 @@
 
-public struct FunctionNode: Evaluable {
-	public internal(set) var args: [Argument]
-	public internal(set) var functions: FunctionContainer
-	
-	public internal(set) var arguments: ArgumentPath
-	public let identifier: String
+public extension Operator {
+	struct Function: Evaluable {
+		public internal(set) var args: [Argument]
+		public internal(set) var functions: FunctionContainer
+		
+		public internal(set) var arguments: ArgumentPath
+		public let identifier: String
 
-	public init(identifier: String, arguments: [Argument], functions: FunctionContainer.Visitor) {
-		self.identifier = identifier
-		self.args = arguments
-		self.arguments = ArgumentPath()
-		self.functions = FunctionContainer()
+		public init(identifier: String, arguments: [Argument], functions: FunctionContainer.Visitor) {
+			self.identifier = identifier
+			self.args = arguments
+			self.arguments = ArgumentPath()
+			self.functions = FunctionContainer()
 
-		for idx in args.indices {
-			self.arguments.argumentsPath.append(\Self.args[idx])
+			for idx in args.indices {
+				self.arguments.argumentsPath.append(\Self.args[idx])
+			}
+
+			functions(&self.functions)
 		}
 
-		functions(&self.functions)
+		public func evaluate() throws -> MathValue { try functions.evaluate(args) }
+		public func evaluateType() -> MathType? { functions.evaluateType(args) }
 	}
-
-	public func evaluate() throws -> MathValue { try functions.evaluate(args) }
-	public func evaluateType() -> MathType? { functions.evaluateType(args) }
 }
 
-public extension FunctionNode {
+public extension Operator.Function {
 	init<T0, R>(identifier: String, function: @escaping (T0) throws -> R) 
 	where T0: MathTypeConvertible, R: MathTypeConvertible {
 		self.init(
