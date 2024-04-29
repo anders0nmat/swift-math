@@ -9,7 +9,7 @@ var lastResult = ""
 var events = [String]()
 
 let parser = TreeParser(operators: operators)
-let printer = NodePrinter()
+//let printer = NodePrinter()
 let commands: [Command] = [
 	Command(["q", "quit"], description: "Quits the application") {
 		exit(0)
@@ -102,10 +102,10 @@ calcLoop: while true {
 	print("Exit with", ":q".colored(.cyan), "Help with", ":h".colored(.cyan))
 	print()
 	if debugDraw {
-		print(printer.debugDraw(node: parser.root, current: parser.current).map({"  " + $0}).joined(separator: "\n"))
+		print(parser.root.debugDisplayStrings.map({ "  " + $0 }).joined(separator: "\n"))
 	}
 	else {
-		print("  " + printer.prettyDraw(node: parser.root, current: parser.current))
+		print("  " + parser.root.displayString)
 	}
 	switch Result(catching: { try parser.root.evaluate() }) {
 		case .success(let val):
