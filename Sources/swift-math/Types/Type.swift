@@ -7,7 +7,7 @@ public enum MathType: Equatable, Hashable, CustomStringConvertible {
 	case identifier
 	indirect case list(MathType?)
 
-	case generic(Type.Generic.Identifier)
+	case generic(MathGeneric.Identifier)
 
 	init<T: MathTypeConvertible>(rawValue: T) {	
 		self = T.mathType
