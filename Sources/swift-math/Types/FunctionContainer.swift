@@ -1,6 +1,6 @@
 
 
-public struct FunctionContainer {
+public final class FunctionContainer {
 	public typealias CallSignature = [MathType]
 	public typealias FunctionDelegator = (_ args: [MathValue]) throws -> MathValue
 	public struct Function {
@@ -8,7 +8,7 @@ public struct FunctionContainer {
 		var function: FunctionDelegator
 	}
 
-	public typealias Visitor = (inout FunctionContainer) -> Void
+	public typealias Visitor = (FunctionContainer) -> Void
 
 	private var overloads: [CallSignature : Function]
 
@@ -16,9 +16,9 @@ public struct FunctionContainer {
 		self.overloads = [:]
 	}
 
-	public init(visitor: Visitor) {
+	public convenience init(visitor: Visitor) {
 		self.init()
-		visitor(&self)
+		visitor(self)
 	}
 
 	private func typeMatches(g: MathType, c: MathType, pinned: inout [Type.Generic.Identifier: MathType]) -> Bool {
@@ -72,7 +72,7 @@ public struct FunctionContainer {
 		return nil
 	}
 
-	public mutating func addFunction(signature: CallSignature, function: Function) {
+	public func addFunction(signature: CallSignature, function: Function) {
 		overloads[signature] = function
 	}
 
@@ -115,7 +115,7 @@ public struct FunctionContainer {
 }
 
 public extension FunctionContainer {
-	mutating func addFunction<T0, R>(_ fn: @escaping (T0) throws -> R) 
+	func addFunction<T0, R>(_ fn: @escaping (T0) throws -> R) 
 	where T0: MathTypeConvertible, R: MathTypeConvertible {
 		addFunction(
 			signature: [T0.mathType],
@@ -123,14 +123,14 @@ public extension FunctionContainer {
 				returnType: R.mathType,
 				function: {args in
 					try MathValue(rawValue: fn(
-						args[0].asType()
+						args[0].cast(to: T0.self)
 					))
 				}
 			)
 		)
 	}
 
-	mutating func addFunction<T0, T1, R>(_ fn: @escaping (T0, T1) throws -> R) 
+	func addFunction<T0, T1, R>(_ fn: @escaping (T0, T1) throws -> R) 
 	where T0: MathTypeConvertible, T1: MathTypeConvertible, R: MathTypeConvertible {
 		addFunction(
 			signature: [T0.mathType, T1.mathType],
@@ -138,15 +138,15 @@ public extension FunctionContainer {
 				returnType: R.mathType,
 				function: {args in
 					try MathValue(rawValue: fn(
-						args[0].asType(),
-						args[1].asType()
+						args[0].cast(to: T0.self),
+						args[1].cast(to: T1.self)
 					))
 				}
 			)
 		)
 	}
 
-	mutating func addFunction<T0, T1, T2, R>(_ fn: @escaping (T0, T1, T2) throws -> R) 
+	func addFunction<T0, T1, T2, R>(_ fn: @escaping (T0, T1, T2) throws -> R) 
 	where T0: MathTypeConvertible, T1: MathTypeConvertible, T2: MathTypeConvertible, R: MathTypeConvertible {
 		addFunction(
 			signature: [T0.mathType, T1.mathType, T2.mathType],
@@ -154,16 +154,16 @@ public extension FunctionContainer {
 				returnType: R.mathType,
 				function: {args in
 					try MathValue(rawValue: fn(
-						args[0].asType(),
-						args[1].asType(),
-						args[2].asType()
+						args[0].cast(to: T0.self),
+						args[1].cast(to: T1.self),
+						args[2].cast(to: T2.self)
 					))
 				}
 			)
 		)
 	}
 
-	mutating func addFunction<T0, T1, T2, T3, R>(_ fn: @escaping (T0, T1, T2, T3) throws -> R) 
+	func addFunction<T0, T1, T2, T3, R>(_ fn: @escaping (T0, T1, T2, T3) throws -> R) 
 	where T0: MathTypeConvertible, T1: MathTypeConvertible, T2: MathTypeConvertible, T3: MathTypeConvertible, R: MathTypeConvertible {
 		addFunction(
 			signature: [T0.mathType, T1.mathType, T2.mathType, T3.mathType],
@@ -171,10 +171,10 @@ public extension FunctionContainer {
 				returnType: R.mathType,
 				function: {args in
 					try MathValue(rawValue: fn(
-						args[0].asType(),
-						args[1].asType(),
-						args[2].asType(),
-						args[3].asType()
+						args[0].cast(to: T0.self),
+						args[1].cast(to: T1.self),
+						args[2].cast(to: T2.self),
+						args[3].cast(to: T3.self)
 					))
 				}
 			)

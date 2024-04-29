@@ -5,15 +5,12 @@ import Foundation
 let operators: [AnyEvaluable] = 
 	Operator.builtins +
 	Operator.basicArithmetic +
+	Operator.advancedArithmetic +
 	Operator.constants +
 	Operator.trigonometry +
 	Operator.listManipulation + 
 
-	[	
-	Operator.PrefixFunction(identifier: "pow", arguments: [Argument()]) { 
-		$0.addFunction(pow)
-	},
-
+	[
 	Operator.Function(identifier: "exp", function: exp),
-	Operator.Iterate(identifier: "sum", initialValue: 0, reducer: +),
+	Operator.Iterate(identifier: "sum", initialValue: .number(0), functions: Operator.addFunctions),
 	]

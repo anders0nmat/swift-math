@@ -16,8 +16,8 @@ public enum MathValue: Equatable, CustomStringConvertible {
 		}
 	}
 
-	func asNumber() throws -> Type.Number { try asType() }
-	func asIdentifier() throws -> Type.Identifier { try asType() }
+	func asNumber() throws -> Type.Number { try cast(to: Type.Number.self) }
+	func asIdentifier() throws -> Type.Identifier { try cast(to: Type.Identifier.self) }
 
 	public var description: String {
 		switch self {
@@ -25,10 +25,6 @@ public enum MathValue: Equatable, CustomStringConvertible {
 			case .identifier(let val): "\"\(val)\""
 			case .list(let val): String(describing: val.values)
 		}
-	}
-
-	func asType<T: MathTypeConvertible>() throws -> T {
-		try T(value: self)
 	}
 
 	func cast<T: MathTypeConvertible>(to type: T.Type) throws -> T {

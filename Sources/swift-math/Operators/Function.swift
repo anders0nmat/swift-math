@@ -7,17 +7,15 @@ public extension Operator {
 		public internal(set) var arguments: ArgumentPath
 		public let identifier: String
 
-		public init(identifier: String, arguments: [Argument], functions: FunctionContainer.Visitor) {
+		public init(identifier: String, arguments: [Argument], functions: FunctionContainer) {
 			self.identifier = identifier
 			self.args = arguments
 			self.arguments = ArgumentPath()
-			self.functions = FunctionContainer()
+			self.functions = functions
 
 			for idx in args.indices {
 				self.arguments.argumentsPath.append(\Self.args[idx])
 			}
-
-			functions(&self.functions)
 		}
 
 		public func evaluate() throws -> MathValue { try functions.evaluate(args) }
@@ -31,7 +29,7 @@ public extension Operator.Function {
 		self.init(
 			identifier: identifier,
 			arguments: [Argument()],
-			functions: {
+			functions: FunctionContainer {
 				$0.addFunction(function)
 			}
 		)
@@ -42,7 +40,7 @@ public extension Operator.Function {
 		self.init(
 			identifier: identifier,
 			arguments: [Argument(), Argument()],
-			functions: {
+			functions: FunctionContainer {
 				$0.addFunction(function)
 			}
 		)
@@ -53,7 +51,7 @@ public extension Operator.Function {
 		self.init(
 			identifier: identifier,
 			arguments: [Argument(), Argument(), Argument()],
-			functions: {
+			functions: FunctionContainer {
 				$0.addFunction(function)
 			}
 		)
@@ -64,7 +62,7 @@ public extension Operator.Function {
 		self.init(
 			identifier: identifier,
 			arguments: [Argument(), Argument(), Argument(), Argument()],
-			functions: {
+			functions: FunctionContainer {
 				$0.addFunction(function)
 			}
 		)

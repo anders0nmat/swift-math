@@ -1,14 +1,15 @@
 
 public extension Operator {
-	struct Division: PrefixFunctionEvaluable {
+	struct Divide: PrefixFunctionEvaluable {
 	    public var identifier: String { "/" }
 		public static var functions = FunctionContainer {
 			$0.addFunction(/)
 		}
 
-		public var divident = Argument()
-		public var divisor = Argument()
+		public var divident = Argument(name: "Divident")
+		public var divisor = Argument(name: "Divisor")
 		public var arguments = ArgumentPath(
-			arguments: \.divident, \.divisor)
+			prefix: \.divident,
+			arguments: \.divisor)
 	}
 }

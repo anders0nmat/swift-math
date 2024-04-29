@@ -1,8 +1,8 @@
 
 public extension Operator {
 	struct Iterate: ContextEvaluable {
-		public let reducer: (Type.Number, Type.Number) -> Type.Number
-		public let initialValue: Type.Number
+		public let functions: FunctionContainer
+		public let initialValue: MathValue
 		public let identifier: String
 
 		public internal(set) var varName = Argument()
@@ -14,9 +14,9 @@ public extension Operator {
 			arguments: \.varName, \.start, \.end, \.expression
 		)
 
-		public init(identifier: String, initialValue: Type.Number, reducer: @escaping (Type.Number, Type.Number) -> Type.Number) {
+		public init(identifier: String, initialValue: MathValue, functions: FunctionContainer) {
 			self.identifier = identifier
-			self.reducer = reducer
+			self.functions = functions
 			self.initialValue = initialValue
 		}
 
@@ -52,15 +52,21 @@ public extension Operator {
 				default: throw MathError.unexpectedType(expected: .number)
 			}
 
-			var total = initialValue
-			for item in items {
+			if items.isEmpty {
+				return initialValue
+			}
+
+			expression.node.variables.set(name, to: items.first!)
+			defer { expression.node.variables.deleteValue(name) }
+			
+			var total = try expression.evaluate()
+			for item in items.suffix(from: 1) {
 				expression.node.variables.set(name, to: item)
 
-				total = try reducer(total, expression.evaluate().asNumber())
+				total = try functions.evaluate([total, expression.evaluate()])
 			}
-			expression.node.variables.deleteValue(name)
 
-			return .number(total)
+			return total
 		}	
 	}
 }

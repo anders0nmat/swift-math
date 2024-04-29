@@ -8,12 +8,10 @@ public extension Operator {
 		public internal(set) var functions: FunctionContainer
 		public internal(set) var parts = ArgumentList()
 
-		public init(priority: UInt, identifier: String, functions: FunctionContainer.Visitor) {
+		public init(priority: UInt, identifier: String, functions: FunctionContainer) {
 			self.priority = priority
-			self.functions = FunctionContainer()
+			self.functions = functions
 			self.identifier = identifier
-
-			functions(&self.functions)
 		}
 		
 		public mutating func merge(with other: Infix) -> Bool {
