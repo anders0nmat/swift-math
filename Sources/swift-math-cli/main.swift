@@ -116,7 +116,6 @@ calcLoop: while true {
 	print()
 
 	print(lastResult)
-	print(events.joined(separator: "\n"))
 	print(">> ", terminator: "")
 	flush()
 

@@ -82,6 +82,18 @@ public final class TreeParser {
 		Returns the next insertion point on new operators
 	*/
 	internal func getHead(from node: AnyNode) -> AnyNode {
+		for child in node.children {
+			if let ancestor = getHead(from: child) as? Node<Operator.Empty> {
+				return ancestor
+			}
+		}
+		if node.hasRest {
+			let newNode = Node.empty()
+			node.children.append(newNode)
+			return newNode
+		}
+		return node
+		/*
 		if node.argumentCount > 0 {
 			return node.children[node.hasPrefix ? 1 : 0]
 		}
@@ -90,6 +102,7 @@ public final class TreeParser {
 			return node.children.last!
 		}
 		return node
+		*/
 	}
 
 	internal enum NavigationOrigin {
@@ -279,7 +292,10 @@ public final class TreeParser {
 		if newNode.hasPrefix {
 			if current is Node<Operator.Empty> {
 				// TODO: Allow prefix arguments to be empty?
-				throw ParseError.unexpectedHead
+				// throw ParseError.unexpectedHead
+
+				current.replaceSelf(with: newNode)
+				self.current = getHead(from: newNode)
 			}
 			else {
 				current.replaceSelf(with: newNode)

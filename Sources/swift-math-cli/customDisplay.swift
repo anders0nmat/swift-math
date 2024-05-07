@@ -70,3 +70,13 @@ extension Operator.Identifier: CustomDisplayable {
 	var debugDisplayProperties: String { "identifier: \"\(name)\"" }
 }
 
+extension Operator.Parenthesis: CustomDisplayable {
+	var displayString: String { "(\(arg.node.displayString))" }
+	var debugDisplayProperties: String { "" }
+}
+
+extension Operator.Exponent: CustomDisplayable {
+	var displayString: String { "(\(base.node.displayString))^(\(exponent.node.displayString))" }
+	var debugDisplayProperties: String { "" }
+}
+

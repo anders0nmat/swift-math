@@ -74,6 +74,7 @@ extension TreeParser {
 				case "-": return .symbol("-")
 				case "*": return .symbol("*")
 				case "/": return .symbol("/")
+				case "^": return .symbol("^")
 				case "[": return .startList
 				case "]": return .endList
 				case "\"":

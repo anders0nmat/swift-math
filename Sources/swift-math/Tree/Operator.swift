@@ -18,7 +18,7 @@ public extension Operator {
 		Infix(priority: 11, identifier: "-", functions: subtractFunctions),
 		Infix(priority: 40, identifier: "*", functions: multiplyFunctions),
 		Divide(),
-		Function(identifier: "(") { (a: Type._0) in a }
+		Parenthesis()
 	] }
 
 	static var advancedArithmetic: [AnyEvaluable] { [
