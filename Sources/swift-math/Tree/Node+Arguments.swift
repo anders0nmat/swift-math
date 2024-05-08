@@ -6,7 +6,7 @@ public extension _Node {
 
 	var argumentCount: Int { body.arguments.argumentsPath.count }
 
-	var hasPriority: Bool { Body.self is any PriorityEvaluable }
+	var hasPriority: Bool { body is any PriorityEvaluable }
 	var priority: UInt? { (body as? any PriorityEvaluable)?.priority }
 
 	var prefixArgument: Argument? { body.arguments.prefixPath.map { body[keyPath: $0] } }

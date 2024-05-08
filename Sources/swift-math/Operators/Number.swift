@@ -83,3 +83,7 @@ public extension Operator {
 		public func evaluateType() -> MathType? { .number }
 	}
 }
+
+public extension Node where Body == Operator.Number {
+	static func number(_ value: Type.Number) -> Self { Self(Body(value)) }
+}

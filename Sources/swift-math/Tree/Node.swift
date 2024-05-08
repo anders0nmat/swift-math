@@ -172,3 +172,8 @@ extension _Node {
 		}
 	} 
 }
+
+extension Array where Element == AnyNode {
+	func firstIndex(of node: AnyNode) -> Index? { firstIndex(where: { $0 === node }) }
+	func contains(_ node: AnyNode) -> Bool { contains(where: { $0 === node }) }
+}

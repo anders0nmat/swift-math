@@ -74,6 +74,10 @@ func treeCallback(node: AnyNode, event: NodeEvent) {
 }
 
 func executeCommand(_ input: String) {
+	guard !input.isEmpty else {
+		lastResult = "Missing Command after ':'"
+		return
+	}
 	let parts = input.split(separator: " ", maxSplits: 1)
 	let command = String(parts[0])
 	let arg = String(parts.count > 1 ? parts[1] : "")
@@ -97,10 +101,11 @@ func addObserver(to tree: AnyNode) {
 }
 
 calcLoop: while true {
-	print(TerminalString.Cursor.clearScreen, TerminalString.Cursor.move(), separator: "", terminator: "")
+	//print(TerminalString.Cursor.clearScreen, TerminalString.Cursor.move(), separator: "", terminator: "")
 	print("SwiftMath Calculator".styled([.bold]))
 	print("Exit with", ":q".colored(.cyan), "Help with", ":h".colored(.cyan))
 	print()
+	currentNode = parser.current
 	if debugDraw {
 		print(parser.root.debugDisplayStrings.map({ "  " + $0 }).joined(separator: "\n"))
 	}

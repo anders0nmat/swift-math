@@ -20,3 +20,7 @@ public extension Operator {
 		public func evaluateType() -> MathType? { .identifier }
 	}
 }
+
+public extension Node where Body == Operator.Identifier {
+	static func identifier(_ name: Type.Identifier) -> Self { Self(Body(name)) }
+}

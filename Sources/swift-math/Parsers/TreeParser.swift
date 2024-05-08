@@ -21,6 +21,7 @@ public final class TreeParser {
 
 	public var tokenAdvance = Token("->")
 	public var tokenDeadvance = Token("<-")
+	public var tokenErase = Token("erase")
 
 	public init(operators: [String : AnyEvaluable]) {
 		self.root = Node.expression()
@@ -50,9 +51,8 @@ public final class TreeParser {
 	}
 
 	public func erase() {
-		let newCurrent = Node.empty()
-		self.current?.replaceSelf(with: newCurrent)
-		self.current = newCurrent
+		guard let current else { return }
+		self.current = clearNode(current)
 	}
 
 	internal func processToken(_ token: Token) throws {
@@ -93,16 +93,71 @@ public final class TreeParser {
 			return newNode
 		}
 		return node
-		/*
-		if node.argumentCount > 0 {
-			return node.children[node.hasPrefix ? 1 : 0]
+	}
+
+	internal func clearNode(_ node: AnyNode) -> AnyNode {
+		guard let parent = node.parent else { return node }
+		guard let idx = parent.children.firstIndex(of: node) else { return node }
+
+		if node is Node<Operator.Empty> {
+			let nextNode = deleteEmptyNode(node)
+			if nextNode === parent && parent.children.indices.contains(parent.children.index(before: idx)) {
+				return parent.children[parent.children.index(before: idx)]
+			}
+			return nextNode
 		}
-		else if node.hasRest {
-			node.children.append(Node.empty())
-			return node.children.last!
+
+		let newNode = Node.empty()
+
+		var newChildren = parent.children.map { $0 === node ? newNode : $0 }
+
+		if let restNodes = parent.restNodes, let idx = restNodes.lastIndex(where: { !($0 is Node<Operator.Empty>) }), restNodes.contains(node) {
+			let endDistance = restNodes.distance(from: idx, to: restNodes.endIndex)
+			let trailingRange = 
+				(newChildren.index(newChildren.endIndex, offsetBy: -endDistance + 1))
+				..<
+				newChildren.endIndex
+
+			if !trailingRange.isEmpty {
+				newChildren.removeSubrange(trailingRange)
+				newChildren.append(newNode)
+			}
 		}
-		return node
-		*/
+
+		parent.children = newChildren
+
+		return newNode
+	}
+
+	/*
+		Deletes the given node from the rest-list of its parent.
+		Returns the successor
+	*/
+	internal func deleteEmptyNode(_ node: AnyNode) -> AnyNode {
+		guard let parent = node.parent else { return node }
+		guard parent.restNodes?.contains(node) == true else { return node }
+		guard let nodeIndex = parent.children.firstIndex(of: node) else { return node }
+		guard node is Node<Operator.Empty> else { return node }
+
+		parent.children.remove(at: nodeIndex)
+
+		if parent.hasPriority && parent.children.count == 1 {
+			parent.replaceSelf(with: parent.children[0])
+			return parent.children[0]
+		}
+		
+		if parent.children.indices.contains(nodeIndex) {
+			return parent.children[nodeIndex]
+		}
+		return parent
+		
+	}
+
+	internal func appendRestNode(to node: AnyNode) -> AnyNode {
+		guard node.hasRest else { return node }
+		let newNode = Node.empty()
+		node.children.append(newNode)
+		return newNode
 	}
 
 	internal enum NavigationOrigin {
@@ -124,39 +179,30 @@ public final class TreeParser {
 			if let parent = node.parent {
 				return nextChild(of: parent, from: .child(node))
 			}
-			else {
-				return nextChild(of: node, from: .parent)
-			}
+			fallthrough
 		case .parent:
 			if let firstChild = children.first {
 				return nextChild(of: firstChild, from: .parent)
 			}
-			else if node.hasRest {
-				node.children.append(Node.empty())
-				return node.children.last!
+			if node.hasRest {
+				return appendRestNode(to: node)
 			}
-			else {
-				return node
-			}
+			return node
 		case .child(let child):
-			if let idx = children.firstIndex(where: { $0 === child }), idx < children.index(before: children.endIndex) {
+			guard let idx = children.firstIndex(of: child) else { return node }
+			
+			if idx < children.index(before: children.endIndex) {
 				return nextChild(of: children[children.index(after: idx)], from: .parent)
 			}
-			else {
-				if let restList = node.restArgument?.nodeList, !node.hasPriority {
-					if child === restList.last, child is Node<Operator.Empty> {
-						node.children.removeLast()
-					}
-					else {
-						node.children.append(Node.empty())
-						return node.children.last!
-					}
-				}
 
-				return node
+			if !node.hasRest { return node }
+
+			if child is Node<Operator.Empty> {
+				return deleteEmptyNode(child)
 			}
-		}
 
+			return appendRestNode(to: node)
+		}
 	}
 
 	internal func prevChild(of node: AnyNode, from origin: NavigationOrigin = .here) -> AnyNode? {
@@ -166,37 +212,33 @@ public final class TreeParser {
 		switch origin {
 		case .here:
 			if node.hasRest && !node.hasPriority {
-				node.children.append(Node.empty())
-				return node.children.last!	
+				return appendRestNode(to: node)
 			}
-			else if let lastChild = node.children.last {
+			if let lastChild = node.children.last {
 				return prevChild(of: lastChild, from: .parent)
 			}
-			else if let parent = node.parent {
+			if let parent = node.parent {
 				return prevChild(of: parent, from: .child(node))
 			}
-			else {
-				return node
-			}
-		case .parent:
 			return node
+		case .parent: return node
 		case .child(let child):
-			if let idx = children.firstIndex(where: { $0 === child }), idx > children.startIndex {
-				if node.restArgument?.nodeList.last === child, child is Node<Operator.Empty> {
-					node.children.removeLast()
-				}
+			guard let idx = children.firstIndex(of: child) else { return node }
+
+			if node.restNodes?.last === child && child is Node<Operator.Empty> {
+				let nextNode = deleteEmptyNode(child)
+				if nextNode !== node { return nextNode }
+			}
+			
+			if idx > children.startIndex {
 				return prevChild(of: children[children.index(before: idx)], from: .parent)
 			}
-			else if let parent = node.parent {
-				if let restList = node.restArgument?.nodeList, child === restList.last, child is Node<Operator.Empty> {
-					node.children.removeLast()
-				}
 
+			if let parent = node.parent {
 				return prevChild(of: parent, from: .child(node))
 			}
-			else {
-				return prevChild(of: node, from: .parent)
-			}
+			
+			return prevChild(of: node, from: .parent)
 		}
 	}
 
@@ -321,6 +363,7 @@ public final class TreeParser {
 		switch token {
 			case tokenAdvance: self.current = nextChild(of: current)
 			case tokenDeadvance: self.current = prevChild(of: current)
+			case tokenErase: erase()
 			default: return false
 		}
 		return true

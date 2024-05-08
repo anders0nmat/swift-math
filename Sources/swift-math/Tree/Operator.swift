@@ -5,6 +5,16 @@ import Foundation
 public enum Operator {}
 
 public extension Operator {
+	static var allOperators: [AnyEvaluable] {
+		builtins +
+		basicArithmetic +
+		advancedArithmetic +
+		constants +
+		trigonometry +
+		listManipulation
+	}
+
+
 	static var builtins: [AnyEvaluable] { [
 		Number(0),
 		List(),

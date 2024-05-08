@@ -31,3 +31,7 @@ public extension Operator {
 		}
 	}
 }
+
+public extension Node where Body == Operator.Variable {
+	static func variable(_ name: String) -> Self { Self(Body(name)) }
+}

@@ -6,13 +6,15 @@ protocol CustomDisplayable: ContextEvaluable {
 	var debugDisplayProperties: String { get }
 }
 
+var currentNode: AnyNode?
+
 extension _Node {
 	var displayString: String {
 		if let body = body as? any CustomDisplayable {
-			return body.displayString
+			return body.displayString.styled(self === currentNode ? [.underline] : [])
 		}
 
-		return "\(body.identifier)(\(children.map(\.displayString).joined(separator: ", ")))"
+		return "\(body.identifier)(\(children.map(\.displayString).joined(separator: ", ")))".styled(self === currentNode ? [.underline] : [])
 	}
 
 	var debugDisplayStrings: [String] {
@@ -23,8 +25,9 @@ extension _Node {
 			properties = String(describing: body)
 		}
 
+
 		return
-			[String(describing: Body.self) + "(\(properties))"]
+			[(String(describing: Body.self) + "(\(properties))").styled(self === currentNode ? [.underline] : [])]
 		+	children.flatMap(\.debugDisplayStrings).map { "  " + $0 }
 	}
 }
