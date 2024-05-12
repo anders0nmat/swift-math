@@ -139,18 +139,20 @@ public final class TreeParser {
 		guard let nodeIndex = parent.children.firstIndex(of: node) else { return node }
 		guard node is Node<Operator.Empty> else { return node }
 
-		parent.children.remove(at: nodeIndex)
+		var newChildren = parent.children
+		newChildren.remove(at: nodeIndex)
 
-		if parent.hasPriority && parent.children.count == 1 {
-			parent.replaceSelf(with: parent.children[0])
-			return parent.children[0]
+		if parent.hasPriority && newChildren.count == 1 {
+			parent.replaceSelf(with: newChildren[0])
+			return newChildren[0]
 		}
+
+		parent.children = newChildren
 		
 		if parent.children.indices.contains(nodeIndex) {
 			return parent.children[nodeIndex]
 		}
 		return parent
-		
 	}
 
 	internal func appendRestNode(to node: AnyNode) -> AnyNode {

@@ -20,9 +20,16 @@ public struct ArgumentList {
 	public var nameGenerator: (Array.Index) -> String
 	public var nodeList: [AnyNode]
 
-	public init(nameGenerator: @escaping (Array.Index) -> String = {_ in "" }) {
+	public init(nameGenerator: @escaping (Array.Index) -> String = { _ in "" }) {
 		self.nameGenerator = nameGenerator
 		self.nodeList = []
+	}
+
+	func evaluate() throws -> [MathValue] {
+		try nodeList.map { try $0.evaluate() }
+	}
+	var returnTypes: [MathType?] {
+		nodeList.map(\.returnType)
 	}
 }
 
