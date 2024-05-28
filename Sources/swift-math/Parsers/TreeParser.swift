@@ -1,4 +1,6 @@
 
+import Foundation
+
 public final class TreeParser {
 	public struct Token: Equatable {
 		public var name: String
@@ -14,34 +16,34 @@ public final class TreeParser {
 		}
 	}
 
-	public internal(set) var root: AnyNode
-	public internal(set) weak var current: AnyNode?
+	public internal(set) var root: any NodeProtocol
+	public internal(set) weak var current: (any NodeProtocol)?
 
-	public internal(set) var operators: [String : AnyEvaluable]
+	public internal(set) var operators: [String : any ContextEvaluable]
 
 	public var tokenAdvance = Token("->")
 	public var tokenDeadvance = Token("<-")
 	public var tokenErase = Token("erase")
 
-	public init(operators: [String : AnyEvaluable]) {
+	public init(operators: [String : any ContextEvaluable]) {
 		self.root = Node.expression()
 		self.current = self.root.children.first
 		self.operators = operators
 	}
 
-	public convenience init(operators: [AnyEvaluable] = []) {
+	public convenience init(operators: [any ContextEvaluable] = []) {
 		self.init(operators: Dictionary(operators.map {($0.identifier, $0)}, uniquingKeysWith: { a, _ in a }))
 	}
 
-	public func add(name: String, operator op: AnyEvaluable) {
+	public func add(name: String, operator op: any ContextEvaluable) {
 		self.operators[name] = op
 	}
 
-	public func add(_ op: AnyEvaluable) {
+	public func add(_ op: any ContextEvaluable) {
 		add(name: op.identifier, operator: op)
 	}
 
-	public func add(operators: [String : AnyEvaluable]) {
+	public func add(operators: [String : any ContextEvaluable]) {
 		self.operators.merge(operators, uniquingKeysWith: { $1 })
 	}
 
@@ -53,6 +55,40 @@ public final class TreeParser {
 	public func erase() {
 		guard let current else { return }
 		self.current = clearNode(current)
+	}
+
+	public func assignRoot(_ node: any NodeProtocol) {
+		self.root = node
+		self.current = self.root
+	}
+
+	public func load(from data: Data) throws {
+		let oldCurrent = self.current
+		self.current = nil
+
+		let decoder = JSONDecoder()
+		decoder.userInfo[.mathOperators] = operators
+		decoder.userInfo[.mathParser] = self
+		do {
+			let anyNode = try decoder.decode(AnyNode.self, from: data)
+			self.root = anyNode.node
+			if self.current == nil {
+				self.current = self.root
+			}
+		}
+		catch {
+			self.current = oldCurrent
+			throw error
+		}
+	}
+
+	public func save(prettyPrint: Bool = false) throws -> Data {
+		let encoder = JSONEncoder()
+		if prettyPrint {
+			encoder.outputFormatting = .prettyPrinted
+		}
+		encoder.userInfo[.mathParser] = self
+		return try encoder.encode(AnyNode(self.root))
 	}
 
 	internal func processToken(_ token: Token) throws {
@@ -81,7 +117,7 @@ public final class TreeParser {
 	/*
 		Returns the next insertion point on new operators
 	*/
-	internal func getHead(from node: AnyNode) -> AnyNode {
+	internal func getHead(from node: any NodeProtocol) -> any NodeProtocol {
 		for child in node.children {
 			if let ancestor = getHead(from: child) as? Node<Operator.Empty> {
 				return ancestor
@@ -95,7 +131,7 @@ public final class TreeParser {
 		return node
 	}
 
-	internal func clearNode(_ node: AnyNode) -> AnyNode {
+	internal func clearNode(_ node: any NodeProtocol) -> any NodeProtocol {
 		guard let parent = node.parent else { return node }
 		guard let idx = parent.children.firstIndex(of: node) else { return node }
 
@@ -133,7 +169,7 @@ public final class TreeParser {
 		Deletes the given node from the rest-list of its parent.
 		Returns the successor
 	*/
-	internal func deleteEmptyNode(_ node: AnyNode) -> AnyNode {
+	internal func deleteEmptyNode(_ node: any NodeProtocol) -> any NodeProtocol {
 		guard let parent = node.parent else { return node }
 		guard parent.restNodes?.contains(node) == true else { return node }
 		guard let nodeIndex = parent.children.firstIndex(of: node) else { return node }
@@ -155,7 +191,7 @@ public final class TreeParser {
 		return parent
 	}
 
-	internal func appendRestNode(to node: AnyNode) -> AnyNode {
+	internal func appendRestNode(to node: any NodeProtocol) -> any NodeProtocol {
 		guard node.hasRest else { return node }
 		let newNode = Node.empty()
 		node.children.append(newNode)
@@ -165,14 +201,14 @@ public final class TreeParser {
 	internal enum NavigationOrigin {
 		case here
 		case parent
-		case child(AnyNode)
+		case child(any NodeProtocol)
 	}
 
 	/**
 	Gets the next child of `node` after an optional `current`.
 	If Result is nil, there is no next child, indicating that `node` should be kept as `currentNode`
 	*/
-	internal func nextChild(of node: AnyNode, from origin: NavigationOrigin = .here) -> AnyNode? {
+	internal func nextChild(of node: any NodeProtocol, from origin: NavigationOrigin = .here) -> (any NodeProtocol)? {
 		// Buffering because not O(1) lookup
 		let children = node.children
 		
@@ -207,7 +243,7 @@ public final class TreeParser {
 		}
 	}
 
-	internal func prevChild(of node: AnyNode, from origin: NavigationOrigin = .here) -> AnyNode? {
+	internal func prevChild(of node: any NodeProtocol, from origin: NavigationOrigin = .here) -> (any NodeProtocol)? {
 		// Buffering because not O(1) lookup
 		let children = node.children
 		
@@ -292,7 +328,7 @@ public final class TreeParser {
 
 		guard let current else { throw ParseError.unexpectedHead }
 
-		let newNode: AnyNode
+		let newNode: any NodeProtocol
 
 		if current.mergeBody(with: op) {
 			newNode = current

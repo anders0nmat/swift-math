@@ -2,10 +2,15 @@
 public extension Operator {
 	struct Identifier: Evaluable {
 		public var identifier: String { "#identifier" }
-		public let name: String
 
-		public init(_ identifier: String) {
-			self.name = identifier
+		/*public struct Storage: Codable {
+			public let name: String
+		}
+		public var instance: Storage*/
+		public var instance: SingleValueStorage<Type.Identifier>
+
+		public init(_ identifier: Type.Identifier) {
+			self.instance = SingleValueStorage(identifier)
 		}
 
 		public mutating func customize(using arguments: [String]) -> Bool {
@@ -16,7 +21,7 @@ public extension Operator {
 			return true
 		}
 
-		public func evaluate() throws -> MathValue { .identifier(name) }
+		public func evaluate() throws -> MathValue { .identifier(instance.value) }
 		public func evaluateType() -> MathType? { .identifier }
 	}
 }

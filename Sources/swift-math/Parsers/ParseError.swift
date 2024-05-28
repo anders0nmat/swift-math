@@ -4,7 +4,7 @@ public enum ParseError: Error {
 	case noHead
 
 	case unexpectedHead
-	case customizationFailed(for: [String], on: AnyEvaluable)
+	case customizationFailed(for: [String], on: any ContextEvaluable)
 
 	case syntaxError
 
@@ -13,8 +13,8 @@ public enum ParseError: Error {
 
 public struct ParseErrorContainer: Error {
 	var error: ParseError
-	weak var root: AnyNode?
-	weak var current: AnyNode?
+	weak var root: (any NodeProtocol)?
+	weak var current: (any NodeProtocol)?
 }
 
 extension ParseErrorContainer: CustomStringConvertible {

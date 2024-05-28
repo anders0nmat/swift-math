@@ -2,9 +2,9 @@
 public final class VariableContainer {
 	private var variables: [String: MathValue]
 	private var variableTypes: [String: MathType?]
-	private unowned var owner: AnyNode
+	private unowned var owner: any NodeProtocol
 
-	public init(owner: AnyNode) {
+	public init(owner: any NodeProtocol) {
 		self.variables = [:]
 		self.variableTypes = [:]
 		self.owner = owner

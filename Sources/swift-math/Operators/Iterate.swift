@@ -5,10 +5,14 @@ public extension Operator {
 		public let initialValue: MathValue
 		public let identifier: String
 
-		public internal(set) var varName = Argument()
-		public internal(set) var start = Argument()
-		public internal(set) var end = Argument()
-		public internal(set) var expression = Argument()
+		public struct Storage: Codable {
+			public var varName = AnyNode()
+			public var start = AnyNode()
+			public var end = AnyNode()
+			public var expression = AnyNode()
+		}
+		public var instance = Storage()
+
 
 		public var arguments = ArgumentPath(
 			arguments: \.varName, \.start, \.end, \.expression
@@ -21,30 +25,30 @@ public extension Operator {
 		}
 
 		public mutating func childrenChanged() {
-			expression.node.variables.clear()
+			instance.expression.node.variables.clear()
 
-			guard let name = try? varName.evaluate().asIdentifier() else { return }
+			guard let name = try? instance.varName.evaluate().asIdentifier() else { return }
 
-			switch start.returnType {
+			switch instance.start.returnType {
 				case .list(let elementType):
-					expression.node.variables.declare(name, type: elementType)
+					instance.expression.node.variables.declare(name, type: elementType)
 					arguments.argumentsPath = [\.varName, \.start, \.expression]
 					
 				default:
-					expression.node.variables.declare(name, type: .number)
+					instance.expression.node.variables.declare(name, type: .number)
 					arguments.argumentsPath = [\.varName, \.start, \.end, \.expression]
 			}
 		}
 
 		public func evaluate(in context: Node<Self>) throws -> MathValue {
-			let name = try varName.evaluate().asIdentifier()
+			let name = try instance.varName.evaluate().asIdentifier()
 
 			var items: [MathValue] = []
 
-			switch try start.evaluate() {
+			switch try instance.start.evaluate() {
 				case .number(let lower):
 					guard let lower = Int(exactly: lower) else { throw MathError.valueError }
-					guard let upper = try Int(exactly: end.evaluate().asNumber()) else { throw MathError.valueError }
+					guard let upper = try Int(exactly: instance.end.evaluate().asNumber()) else { throw MathError.valueError }
 
 					items = (lower...upper).map { .number(Double($0)) }
 				case .list(let list):
@@ -56,14 +60,14 @@ public extension Operator {
 				return initialValue
 			}
 
-			expression.node.variables.set(name, to: items.first!)
-			defer { expression.node.variables.deleteValue(name) }
+			instance.expression.node.variables.set(name, to: items.first!)
+			defer { instance.expression.node.variables.deleteValue(name) }
 			
-			var total = try expression.evaluate()
+			var total = try instance.expression.evaluate()
 			for item in items.suffix(from: 1) {
-				expression.node.variables.set(name, to: item)
+				instance.expression.node.variables.set(name, to: item)
 
-				total = try functions.evaluate([total, expression.evaluate()])
+				total = try functions.evaluate([total, instance.expression.evaluate()])
 			}
 
 			return total

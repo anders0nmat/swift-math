@@ -11,7 +11,7 @@ public enum MathError: Error {
 
 public struct MathErrorContainer: Error {
 	public var error: MathError
-	public weak var origin: AnyNode?
+	public weak var origin: (any NodeProtocol)?
 }
 
 extension MathErrorContainer: CustomStringConvertible {

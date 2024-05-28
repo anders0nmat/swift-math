@@ -20,7 +20,7 @@ extension PriorityEvaluable {
 	public mutating func merge(with other: Self) -> Bool { false }
 }
 
-extension _Node {
+extension NodeProtocol {
 	internal func mergeBody(with other: any PriorityEvaluable) -> Bool {
 		if
 		var body = self.body as? any PriorityEvaluable,

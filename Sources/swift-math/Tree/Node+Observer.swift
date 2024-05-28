@@ -5,9 +5,9 @@ public enum NodeEvent {
 	case context
 }
 
-public typealias NodeEventCallback = (AnyNode, NodeEvent) -> Void
+public typealias NodeEventCallback = (any NodeProtocol, NodeEvent) -> Void
 
-extension _Node {
+extension NodeProtocol {
 	internal func fire(event: NodeEvent) {
 		self.observers.forEach {
 			$0(self, event)

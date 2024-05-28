@@ -3,7 +3,7 @@ import swift_math
 
 extension Operator.Infix: CustomDisplayable {
 	var displayString: String {
-		parts.nodeList.map(\.displayString).joined(separator: identifier)
+		instance.value.map(\.node.displayString).joined(separator: identifier)
 	}
 
 	var debugDisplayProperties: String { [
@@ -14,19 +14,20 @@ extension Operator.Infix: CustomDisplayable {
 }
 
 extension Operator.Number: CustomDisplayable {
-	var displayString: String { numberString }
+	var displayString: String { instance.numberString }
 
 	var debugDisplayProperties: String { [
-		"numberString: \(numberString)",
-		"sign: \(sign)",
-		"value: \(value)",
-		"decimal: \(decimal)"
+		"numberString: \(instance.numberString)",
+		"sign: \(instance.sign)",
+		"integer: \(instance.integer)",
+		"fraction: \(instance.fraction)",
+		"decimal: \(instance.decimal)"
 		].joined(separator: ", ")
 	}
 }
 
 extension Operator.Expression: CustomDisplayable {
-	var displayString: String { ": " + expr.node.displayString }
+	var displayString: String { ": " + instance.value.node.displayString }
 	var debugDisplayProperties: String { "" }
 }
 
@@ -54,29 +55,29 @@ extension Operator.Constant: CustomDisplayable {
 
 extension Operator.List: CustomDisplayable {
 	var displayString: String {
-		"[\(entries.nodeList.map(\.displayString).joined(separator: ", "))]"
+		"[\(instance.value.map(\.node.displayString).joined(separator: ", "))]"
 	}
 
 	var debugDisplayProperties: String { "" }
 }
 
 extension Operator.Variable: CustomDisplayable {
-	var displayString: String { name }
-	var debugDisplayProperties: String { "name: \"\(name)\"" }
+	var displayString: String { instance.value }
+	var debugDisplayProperties: String { "name: \"\(instance.value)\"" }
 }
 
 extension Operator.Identifier: CustomDisplayable {
-	var displayString: String { "\"\(name)\"" }
-	var debugDisplayProperties: String { "identifier: \"\(name)\"" }
+	var displayString: String { "\"\(instance.value)\"" }
+	var debugDisplayProperties: String { "identifier: \"\(instance.value)\"" }
 }
 
 extension Operator.Parenthesis: CustomDisplayable {
-	var displayString: String { "(\(arg.node.displayString))" }
+	var displayString: String { "(\(instance.value.node.displayString))" }
 	var debugDisplayProperties: String { "" }
 }
 
 extension Operator.Exponent: CustomDisplayable {
-	var displayString: String { "(\(base.node.displayString))^(\(exponent.node.displayString))" }
+	var displayString: String { "(\(instance.base.node.displayString))^(\(instance.exponent.node.displayString))" }
 	var debugDisplayProperties: String { "" }
 }
 

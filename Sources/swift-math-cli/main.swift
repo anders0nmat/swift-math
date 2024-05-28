@@ -4,6 +4,7 @@ import swift_math
 func flush() { fflush(stdout) }
 
 var debugDraw = false
+var clearScreen = true
 
 var lastResult = ""
 var events = [String]()
@@ -67,9 +68,44 @@ let commands: [Command] = [
 	Command(["r", "remove"], description: "Remove selected expression") {
 		parser.erase()
 	},
+	Command(["json"], description: "Output current expression as JSON") {
+		lastResult = try String(data: parser.save(prettyPrint: true), encoding: .utf8) ?? ""
+
+		/*let encoder = JSONEncoder()
+		encoder.outputFormatting = .prettyPrinted
+		let data = try encoder.encode(AnyNode(parser.root))
+
+		let jsonString = String(data: data, encoding: .utf8)!
+		lastResult = jsonString*/
+	},
+	Command(["save"], description: "Save current expression to file <arg>") { path in 
+		let url = URL(fileURLWithPath: path)
+		try parser.save(prettyPrint: true).write(to: url)
+		lastResult = "Success! saved to \(url)".colored(.green)
+		
+		
+		/*let encoder = JSONEncoder()
+		encoder.outputFormatting = .prettyPrinted
+		let data = try encoder.encode(AnyNode(parser.root))
+		try data.write(to: url)*/
+	},
+	Command(["load"], description: "Load expression in file <arg>") { path in 
+		let url = URL(fileURLWithPath: path)
+		try parser.load(from: Data(contentsOf: url))
+		lastResult = "Success! Loaded from \(url)".colored(.green)
+		
+		/*let decoder = JSONDecoder()
+		decoder.userInfo[.mathOperators] = parser.operators
+		let data = try Data(contentsOf: url)
+		let node = try decoder.decode(AnyNode.self, from: data)
+		parser.assignRoot(node.node)*/
+	},
+	Command(["cls"], description: "Toggle Clear-Screen on command input") {
+		clearScreen.toggle()
+	}
 ]
 
-func treeCallback(node: AnyNode, event: NodeEvent) {
+func treeCallback(node: any NodeProtocol, event: NodeEvent) {
 	events.append("\(event) at \(node)")
 }
 
@@ -95,13 +131,15 @@ func executeCommand(_ input: String) {
 	}
 }
 
-func addObserver(to tree: AnyNode) {
+func addObserver(to tree: any NodeProtocol) {
 	tree.observers = [treeCallback]
 	tree.children.forEach(addObserver)
 }
 
 calcLoop: while true {
-	//print(TerminalString.Cursor.clearScreen, TerminalString.Cursor.move(), separator: "", terminator: "")
+	if clearScreen {
+		print(TerminalString.Cursor.clearScreen, TerminalString.Cursor.move(), separator: "", terminator: "")
+	}
 	print("SwiftMath Calculator".styled([.bold]))
 	print("Exit with", ":q".colored(.cyan), "Help with", ":h".colored(.cyan))
 	print()

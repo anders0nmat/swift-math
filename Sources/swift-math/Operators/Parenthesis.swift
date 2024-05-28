@@ -6,8 +6,9 @@ public extension Operator {
 			$0.addFunction { (a: Type._0) in a }
 		}
 
-		public var arg = Argument()
+		public var instance = SingleArgumentStorage(AnyNode())
+
 		public var arguments = ArgumentPath(
-			arguments: \.arg)
+			arguments: \.value)
 	}
 }

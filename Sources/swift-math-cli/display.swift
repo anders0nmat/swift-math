@@ -6,9 +6,9 @@ protocol CustomDisplayable: ContextEvaluable {
 	var debugDisplayProperties: String { get }
 }
 
-var currentNode: AnyNode?
+var currentNode: (any NodeProtocol)?
 
-extension _Node {
+extension NodeProtocol {
 	var displayString: String {
 		if let body = body as? any CustomDisplayable {
 			return body.displayString.styled(self === currentNode ? [.underline] : [])

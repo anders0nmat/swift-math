@@ -1,5 +1,5 @@
 
-public protocol _Node: AnyObject {
+/*public protocol _Node: AnyObject {
 	associatedtype Body: ContextEvaluable
 
 	var parent: AnyNode? { get set }
@@ -21,13 +21,13 @@ public protocol _Node: AnyObject {
 
 	func childrenChanged()
 	func contextChanged()
-}
+}*/
 
-public typealias AnyNode = any _Node
+//public typealias AnyNode = any _Node
 
-public final class Node<Body: ContextEvaluable>: _Node {
-	public weak var parent: AnyNode?
-	public var root: AnyNode { parent?.root ?? self }
+public final class Node<Body: ContextEvaluable>: NodeProtocol {
+	public weak var parent: (any NodeProtocol)?
+	public var root: any NodeProtocol { parent?.root ?? self }
 	public var observers: [NodeEventCallback] = []
 	
 	internal var _body: Body
@@ -41,7 +41,7 @@ public final class Node<Body: ContextEvaluable>: _Node {
 		}
 	}
 
-	public var children: [AnyNode] {
+	public var children: [any NodeProtocol] {
 		get {
 				(prefixNode.map { [$0] } ?? [])
 			+	(argumentNodes)
@@ -51,15 +51,15 @@ public final class Node<Body: ContextEvaluable>: _Node {
 			var iterator = newValue.makeIterator()
 
 			if let prefixPath {
-				_body[keyPath: prefixPath].node = iterator.next() ?? Operator.Empty.node()
+				_body.instance[keyPath: prefixPath].node = iterator.next() ?? Operator.Empty.node()
 			}
 
 			argumentPath.forEach {
-				_body[keyPath: $0].node = iterator.next() ?? Operator.Empty.node()
+				_body.instance[keyPath: $0].node = iterator.next() ?? Operator.Empty.node()
 			}
 
 			if let restPath {
-				_body[keyPath: restPath].nodeList = Array(iterator)
+				_body.instance[keyPath: restPath] = Array(iterator).map { AnyNode($0) }
 			}
 
 			linkChildren()
@@ -75,7 +75,7 @@ public final class Node<Body: ContextEvaluable>: _Node {
 
 	public private(set) var returnType: MathType?
 
-	public init(_ body: Body, parent: AnyNode? = nil) {
+	public init(_ body: Body, parent: (any NodeProtocol)? = nil) {
 		self.parent = parent
 		self._body = body
 		self._variables = VariableContainer(owner: self)
@@ -92,7 +92,7 @@ public final class Node<Body: ContextEvaluable>: _Node {
 		catch let e { throw MathErrorContainer(error: .unknown(e), origin: self) }
 	}
 
-	public func replace(child node: AnyNode, with new: AnyNode) {
+	public func replace(child node: any NodeProtocol, with new: any NodeProtocol) {
 		guard node.parent === self else { return }
 
 		new.parent = self
@@ -100,24 +100,24 @@ public final class Node<Body: ContextEvaluable>: _Node {
 		// Old approach, quick'n'dirty but calls all listeners of body regardless of need
 		//children = children.map { $0 === node ? new : $0 }
 
-		if let prefixPath = _body.arguments.prefixPath, _body[keyPath: prefixPath].node === node {
-			_body[keyPath: prefixPath].node = new
+		if let prefixPath = _body.arguments.prefixPath, _body.instance[keyPath: prefixPath].node === node {
+			_body.instance[keyPath: prefixPath].node = new
 		}
 
 		_body.arguments.argumentsPath.forEach {
-			if _body[keyPath: $0].node === node {
-				_body[keyPath: $0].node = new
+			if _body.instance[keyPath: $0].node === node {
+				_body.instance[keyPath: $0].node = new
 			}
 		}
 
-		if let restPath = _body.arguments.restPath, _body[keyPath: restPath].nodeList.contains(where: {$0 === node}) {
-			_body[keyPath: restPath].nodeList = _body[keyPath: restPath].nodeList.map { $0 === node ? new : $0 } 
+		if let restPath = _body.arguments.restPath, _body.instance[keyPath: restPath].contains(where: {$0.node === node}) {
+			_body.instance[keyPath: restPath] = _body.instance[keyPath: restPath].map { $0.node === node ? AnyNode(new) : $0 } 
 		}
 
 		childrenChanged()
 	}
 
-	public func replaceSelf(with new: AnyNode) { parent?.replace(child: self, with: new) }
+	public func replaceSelf(with new: any NodeProtocol) { parent?.replace(child: self, with: new) }
 
 	internal func linkChildren() { children.forEach { $0.parent = self } }
 
@@ -164,7 +164,7 @@ extension Node: CustomDebugStringConvertible {
 	}
 }
 
-extension _Node {
+extension NodeProtocol {
 	func findNodes<T: ContextEvaluable>(with type: T.Type) -> [Node<T>] {
 		(Body.self == type ? [self as! Node<T>] : [])
 		+ children.flatMap {
@@ -173,7 +173,4 @@ extension _Node {
 	} 
 }
 
-extension Array where Element == AnyNode {
-	func firstIndex(of node: AnyNode) -> Index? { firstIndex(where: { $0 === node }) }
-	func contains(_ node: AnyNode) -> Bool { contains(where: { $0 === node }) }
-}
+

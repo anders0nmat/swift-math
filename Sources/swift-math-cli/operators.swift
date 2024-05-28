@@ -2,7 +2,7 @@ import swift_math
 import Foundation
 
 
-let operators: [AnyEvaluable] = 
+let operators: [any ContextEvaluable] = 
 	Operator.builtins +
 	Operator.basicArithmetic +
 	Operator.advancedArithmetic +

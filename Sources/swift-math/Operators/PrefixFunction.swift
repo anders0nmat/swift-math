@@ -1,29 +1,32 @@
 
 public extension Operator {
 	struct PrefixFunction: Evaluable {
-		public internal(set) var prefixArg = Argument()
-		public internal(set) var args: [Argument]
+		public struct Storage: Codable {
+			public var prefixArg = AnyNode()
+			public var args: [AnyNode] = []
+		}
+		public var instance = Storage()
 		public internal(set) var functions: FunctionContainer
 
 		public internal(set) var arguments: ArgumentPath
 		public let identifier: String
 
-		public init(identifier: String, arguments: [Argument], functions: FunctionContainer) {
+		public init(identifier: String, arguments: [AnyNode], functions: FunctionContainer) {
 			self.identifier = identifier
-			self.args = arguments
+			self.instance.args = arguments
 			self.arguments = ArgumentPath(prefix: \.prefixArg)
 			self.functions = functions
 
-			for idx in args.indices {
-				self.arguments.argumentsPath.append(\Self.args[idx])
+			for idx in instance.args.indices {
+				self.arguments.argumentsPath.append(\.args[idx])
 			}
 		}
 
 		public func evaluate() throws -> MathValue {
-			try functions.evaluate([prefixArg] + args)
+			try functions.evaluate([instance.prefixArg] + instance.args)
 		}
 
-		public func evaluateType() -> MathType? { functions.evaluateType([prefixArg] + args) }
+		public func evaluateType() -> MathType? { functions.evaluateType([instance.prefixArg] + instance.args) }
 	}
 }
 
@@ -43,7 +46,7 @@ public extension Operator.PrefixFunction {
 	where T0: MathTypeConvertible, T1: MathTypeConvertible, R: MathTypeConvertible {
 		self.init(
 			identifier: identifier,
-			arguments: [Argument()],
+			arguments: [AnyNode()],
 			functions: FunctionContainer {
 				$0.addFunction(function)
 			}
@@ -54,7 +57,7 @@ public extension Operator.PrefixFunction {
 	where T0: MathTypeConvertible, T1: MathTypeConvertible, T2: MathTypeConvertible, R: MathTypeConvertible {
 		self.init(
 			identifier: identifier,
-			arguments: [Argument(), Argument()],
+			arguments: [AnyNode(), AnyNode()],
 			functions: FunctionContainer {
 				$0.addFunction(function)
 			}
@@ -65,7 +68,7 @@ public extension Operator.PrefixFunction {
 	where T0: MathTypeConvertible, T1: MathTypeConvertible, T2: MathTypeConvertible, T3: MathTypeConvertible, R: MathTypeConvertible {
 		self.init(
 			identifier: identifier,
-			arguments: [Argument(), Argument(), Argument()],
+			arguments: [AnyNode(), AnyNode(), AnyNode()],
 			functions: FunctionContainer {
 				$0.addFunction(function)
 			}

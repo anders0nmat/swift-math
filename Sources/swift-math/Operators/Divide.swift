@@ -6,8 +6,17 @@ public extension Operator {
 			$0.addFunction(/)
 		}
 
-		public var divident = Argument(name: "Divident")
-		public var divisor = Argument(name: "Divisor")
+		public struct Storage: Codable {
+			var divident = AnyNode()
+			var divisor = AnyNode()
+		}
+		public var instance = Storage()
+
+		public var argumentInfo = ArgumentInfo([
+			\.divident : .init(name: "divident"),
+			\.divisor : .init(name: "divisor"),
+		])
+
 		public var arguments = ArgumentPath(
 			prefix: \.divident,
 			arguments: \.divisor)

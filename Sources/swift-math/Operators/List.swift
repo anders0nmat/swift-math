@@ -2,16 +2,21 @@
 public extension Operator {
 	struct List: Evaluable {
 		public var identifier: String { "#list" }
-		public var arguments = ArgumentPath(rest: \.entries)
+		public var arguments = ArgumentPath(rest: \.value)
 
-		public internal(set) var entries = ArgumentList()
+		/*public struct Storage: Codable {
+			public var entries: [AnyNode] = []
+		}
+		public var instance = Storage()
+		*/
+		public var instance = SingleValueStorage([AnyNode]())
 
 		public init() {}
 
 		public func evaluate() throws -> MathValue {
 			var list = Type.List()
 
-			for e in entries.nodeList {
+			for e in instance.value {
 				try list.append(e.evaluate())
 			}
 
@@ -19,10 +24,10 @@ public extension Operator {
 		}
 
 		public func evaluateType() -> MathType? {
-			if entries.nodeList.isEmpty {
+			if instance.value.isEmpty {
 				return .list(nil)
 			}
-			let entryType = entries.nodeList.map { $0.returnType }
+			let entryType = instance.value.map { $0.returnType }
 			if let firstType = entryType.first, let firstType, entryType.allSatisfy({ $0 == firstType }) {
 				return .list(firstType)
 			}

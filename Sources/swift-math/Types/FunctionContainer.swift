@@ -76,11 +76,15 @@ public final class FunctionContainer {
 		overloads[signature] = function
 	}
 
-	public func evaluate(_ args: [Argument]) throws -> MathValue {
+	/*public func evaluate(_ args: [Argument]) throws -> MathValue {
 		try evaluate(args.map(\.node))
-	}
+	}*/
 
 	public func evaluate(_ nodes: [AnyNode]) throws -> MathValue {
+		return try evaluate(nodes.map(\.node))
+	}
+
+	public func evaluate(_ nodes: [any NodeProtocol]) throws -> MathValue {
 		return try evaluate(nodes.map { try $0.evaluate() })
 	}
 
@@ -94,11 +98,15 @@ public final class FunctionContainer {
 		return try fn.function(values)
 	}
 
-	public func evaluateType(_ args: [Argument]) -> MathType? {
+	/*public func evaluateType(_ args: [Argument]) -> MathType? {
 		evaluateType(args.map(\.node))
-	}
+	}*/
 
 	public func evaluateType(_ nodes: [AnyNode]) -> MathType? {
+		evaluateType(nodes.map(\.returnType))
+	}
+
+	public func evaluateType(_ nodes: [any NodeProtocol]) -> MathType? {
 		evaluateType(nodes.map({ $0.returnType }))
 	}
 

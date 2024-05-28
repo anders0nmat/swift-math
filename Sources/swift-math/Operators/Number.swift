@@ -2,23 +2,64 @@
 public extension Operator {
 	struct Number: Evaluable {
 		public var identifier: String { "#number" }
-		public internal(set) var value: (integer: String, fraction: String) = ("", "")
-		public internal(set) var sign: FloatingPointSign = .plus
-		public internal(set) var decimal: Bool = false
 
-		public var numberString: String {
-			var result = ""
-			if sign == .minus {
-				result += "-"
-			}
-			result += value.integer.isEmpty ? "0" : value.integer
-			if decimal {
-				result += "."
-				result += value.fraction.isEmpty ? "0" : value.fraction
-			}
-
-			return result
+		public enum Part: String, Codable {
+			case integer, fraction
 		}
+		public enum Sign: String, Codable {
+			case plus, minus
+		}
+
+		public struct Storage: Codable {
+			public var integer: String = ""
+			public var fraction: String = ""
+
+			public var sign: Sign = .plus
+			public var decimal: Part = .integer
+
+			public var numberString: String {
+				var result = ""
+				if sign == .minus {
+					result += "-"
+				}
+				result += integer.isEmpty ? "0" : integer
+				if decimal == .fraction {
+					result += "."
+					result += fraction.isEmpty ? "0" : fraction
+				}
+
+				return result
+			}
+
+			public init(rawString: String) {
+				let parts = rawString.split(separator: ".", maxSplits: 1, omittingEmptySubsequences: false)
+				let (integer, fraction) = (parts[0], parts.count == 2 ? parts[1] : "")
+
+				switch integer.first {
+					case "+":
+						self.sign = .plus
+						self.integer = String(integer.suffix(from: integer.index(after: integer.startIndex)))
+					case "-":
+						self.sign = .minus
+						self.integer = String(integer.suffix(from: integer.index(after: integer.startIndex)))
+					default: self.integer = String(integer)
+				}
+
+				self.decimal = parts.count == 2 ? .fraction : .integer
+				self.fraction = String(fraction)	
+			}
+
+			public init(from decoder: any Decoder) throws {
+				let container = try decoder.singleValueContainer()
+				try self.init(rawString: container.decode(String.self))
+			}
+
+			public func encode(to encoder: any Encoder) throws {
+				var container = encoder.singleValueContainer()
+				try container.encode(numberString)				
+			}
+		}
+		public var instance: Storage
 
 		public init(_ value: Type.Number) {
 			self.init(rawString: String(value))
@@ -29,21 +70,7 @@ public extension Operator {
 		}
 
 		internal init(rawString: String) {
-			let parts = rawString.split(separator: ".", maxSplits: 1, omittingEmptySubsequences: false)
-			let (integer, fraction) = (parts[0], parts.count == 2 ? parts[1] : "")
-
-			switch integer.first {
-				case "+":
-					self.sign = .plus
-					self.value.integer = String(integer.suffix(from: integer.index(after: integer.startIndex)))
-				case "-":
-					self.sign = .minus
-					self.value.integer = String(integer.suffix(from: integer.index(after: integer.startIndex)))
-				default: self.value.integer = String(integer)
-			}
-
-			self.decimal = parts.count == 2
-			self.value.fraction = String(fraction)
+			self.instance = Storage(rawString: rawString)
 		}
 
 		mutating public func customize(using arguments: [String]) -> Bool {
@@ -54,27 +81,27 @@ public extension Operator {
 		}
 
 		mutating func negate() {
-			switch sign {
-				case .plus: self.sign = .minus
-				case .minus: self.sign = .plus
+			switch instance.sign {
+				case .plus: self.instance.sign = .minus
+				case .minus: self.instance.sign = .plus
 			}
 		}
 
 		mutating func append(number: String) {
-			if decimal {
-				value.fraction.append(number)
+			if instance.decimal == .fraction {
+				instance.fraction.append(number)
 			}
 			else {
-				value.integer.append(number)
+				instance.integer.append(number)
 			}
 		}
 
 		mutating func fraction() {
-			decimal = true
+			instance.decimal = .fraction
 		}
 
 		public func evaluate() throws -> MathValue {
-			if let value = Double(numberString) {
+			if let value = Double(instance.numberString) {
 				return .number(value)
 			}
 			throw MathError.valueError

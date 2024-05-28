@@ -9,37 +9,40 @@ final class NodeTest: XCTestCase {
 
 	struct TestBody: Evaluable {
 		var identifier: String { "" }
-		var pre = Argument()
-		var arg1 = Argument()
-		var arg2 = Argument()
-		var res = ArgumentList()
+		struct Storage: Codable {
+			var pre = AnyNode()
+			var arg1 = AnyNode()
+			var arg2 = AnyNode()
+			var res = [AnyNode]()
+		}
+		var instance = Storage()
 
 		var arguments = ArgumentPath(
 			prefix: \.pre,
 			arguments: \.arg1, \.arg2,
 			rest: \.res)
 
-		var eventSink: ((BodyEvent, AnyNode?) -> Void)?
+		var eventSink: ((BodyEvent, (any NodeProtocol)?) -> Void)?
 
 		func evaluate() throws -> MathValue { .number(0) }
 
-		func childrenChanged() { eventSink?(.children, pre.node.parent) }
-		func contextChanged() { eventSink?(.context, pre.node.parent) }
+		func childrenChanged() { eventSink?(.children, instance.pre.node.parent) }
+		func contextChanged() { eventSink?(.context, instance.pre.node.parent) }
 	}
 
 	func testChildProperty() throws {
 		let parent = Node(TestBody())
 
 		XCTAssertEqual(parent.children.count, 3)
-		XCTAssertEqual(parent.body.res.nodeList.count, 0)
+		XCTAssertEqual(parent.body.instance.res.count, 0)
 
 		XCTAssert(parent.children[0] is Node<Operator.Empty>)
 		XCTAssert(parent.children[1] is Node<Operator.Empty>)
 		XCTAssert(parent.children[2] is Node<Operator.Empty>)
 
-		XCTAssertIdentical(parent.children[0], parent.body.pre.node)
-		XCTAssertIdentical(parent.children[1], parent.body.arg1.node)
-		XCTAssertIdentical(parent.children[2], parent.body.arg2.node)
+		XCTAssertIdentical(parent.children[0], parent.body.instance.pre.node)
+		XCTAssertIdentical(parent.children[1], parent.body.instance.arg1.node)
+		XCTAssertIdentical(parent.children[2], parent.body.instance.arg2.node)
 
 		XCTAssertNotIdentical(parent.children[0], parent.children[1])
 		XCTAssertNotIdentical(parent.children[0], parent.children[2])
@@ -49,7 +52,7 @@ final class NodeTest: XCTestCase {
 		parent.children = [newChild]
 
 		XCTAssertEqual(parent.children.count, 3)
-		XCTAssertIdentical(newChild, parent.body.pre.node)
+		XCTAssertIdentical(newChild, parent.body.instance.pre.node)
 		XCTAssertIdentical(newChild, parent.children[0])
 		XCTAssertIdentical(newChild.parent, parent)
 		XCTAssertIdentical(newChild.root, parent)
@@ -64,13 +67,13 @@ final class NodeTest: XCTestCase {
 		parent.children = [c1, c2, c3, c4, c5]
 
 		XCTAssertEqual(parent.children.count, 5)
-		XCTAssertEqual(parent.body.res.nodeList.count, 2)
+		XCTAssertEqual(parent.body.instance.res.count, 2)
 		
-		XCTAssertIdentical(c1, parent.body.pre.node)
-		XCTAssertIdentical(c2, parent.body.arg1.node)
-		XCTAssertIdentical(c3, parent.body.arg2.node)
-		XCTAssertIdentical(c4, parent.body.res.nodeList[0])
-		XCTAssertIdentical(c5, parent.body.res.nodeList[1])
+		XCTAssertIdentical(c1, parent.body.instance.pre.node)
+		XCTAssertIdentical(c2, parent.body.instance.arg1.node)
+		XCTAssertIdentical(c3, parent.body.instance.arg2.node)
+		XCTAssertIdentical(c4, parent.body.instance.res[0].node)
+		XCTAssertIdentical(c5, parent.body.instance.res[1].node)
 
 		XCTAssertIdentical(c1.parent, parent)
 		XCTAssertIdentical(c2.parent, parent)
@@ -87,7 +90,7 @@ final class NodeTest: XCTestCase {
 		parent.children = []
 
 		XCTAssertEqual(parent.children.count, 3)
-		XCTAssertEqual(parent.body.res.nodeList.count, 0)
+		XCTAssertEqual(parent.body.instance.res.count, 0)
 		XCTAssert(parent.children[0] is Node<Operator.Empty>)
 		XCTAssert(parent.children[1] is Node<Operator.Empty>)
 		XCTAssert(parent.children[2] is Node<Operator.Empty>)
@@ -101,16 +104,16 @@ final class NodeTest: XCTestCase {
 		let parent = Node(TestBody())
 		let c1 = Node.empty()
 
-		parent.replace(child: parent.body.pre.node, with: c1)
+		parent.replace(child: parent.body.instance.pre.node, with: c1)
 
-		XCTAssertIdentical(parent.body.pre.node, c1)
+		XCTAssertIdentical(parent.body.instance.pre.node, c1)
 		XCTAssertIdentical(c1.parent, parent)
 
 		let c2 = Node.empty()
 
-		parent.replace(child: parent.body.arg1.node, with: c2)
+		parent.replace(child: parent.body.instance.arg1.node, with: c2)
 
-		XCTAssertIdentical(parent.body.arg1.node, c2)
+		XCTAssertIdentical(parent.body.instance.arg1.node, c2)
 		XCTAssertIdentical(c2.parent, parent)
 
 		let c3 = Node.empty()
@@ -118,13 +121,13 @@ final class NodeTest: XCTestCase {
 
 		parent.children.append(c3)
 
-		XCTAssertEqual(parent.body.res.nodeList.count, 1)
-		XCTAssertIdentical(parent.body.res.nodeList[0], c3)
+		XCTAssertEqual(parent.body.instance.res.count, 1)
+		XCTAssertIdentical(parent.body.instance.res[0].node, c3)
 
 		parent.replace(child: c3, with: newC3)
 
-		XCTAssertEqual(parent.body.res.nodeList.count, 1)
-		XCTAssertIdentical(parent.body.res.nodeList[0], newC3)
+		XCTAssertEqual(parent.body.instance.res.count, 1)
+		XCTAssertIdentical(parent.body.instance.res[0].node, newC3)
 		XCTAssertIdentical(newC3.parent, parent)
 
 
@@ -142,13 +145,14 @@ final class NodeTest: XCTestCase {
 
 	func testBodyEvents() throws {
 		var events: [(BodyEvent, ObjectIdentifier)] = []
-		let eventCallback = { (kind: BodyEvent, node: AnyNode?) in
-			events.append((kind, ObjectIdentifier(node!)))
+		let eventCallback = { (kind: BodyEvent, node: (any NodeProtocol)?) in
+			guard let node else { return }
+			events.append((kind, ObjectIdentifier(node)))
 		}
 
-		let parent = Node(TestBody(eventSink: eventCallback))
-		let c1 = Node(TestBody(eventSink: eventCallback))
-		let c2 = Node(TestBody(eventSink: eventCallback))
+		let parent = Node<TestBody>(TestBody(eventSink: eventCallback))
+		let c1 = Node<TestBody>(TestBody(eventSink: eventCallback))
+		let c2 = Node<TestBody>(TestBody(eventSink: eventCallback))
 
 		parent.children[1].replaceSelf(with: c1)
 
@@ -177,22 +181,22 @@ final class TreeTest: XCTestCase {
 		let child1 = Node.expression()
 		let child2 = Node.expression()
 
-		root.body.expr.node.replaceSelf(with: child1)
-		child1.body.expr.node.replaceSelf(with: child2)
+		root.body.instance.value.node.replaceSelf(with: child1)
+		child1.body.instance.value.node.replaceSelf(with: child2)
 
 		XCTAssertIdentical(root, child1.parent)
 		XCTAssertIdentical(child1, child2.parent)
 		XCTAssertIdentical(root, child1.root)
 		XCTAssertIdentical(root, child2.root)
 
-		XCTAssertIdentical(root.body.expr.node, child1)
-		XCTAssertIdentical(child1.body.expr.node, child2)
+		XCTAssertIdentical(root.body.instance.value.node, child1)
+		XCTAssertIdentical(child1.body.instance.value.node, child2)
 
-		root.body.expr.node.replaceSelf(with: child2)
+		root.body.instance.value.node.replaceSelf(with: child2)
 
 		XCTAssertIdentical(root, child2.parent)
 		XCTAssertIdentical(root, child2.root)
-		XCTAssertIdentical(root.body.expr.node, child2)
+		XCTAssertIdentical(root.body.instance.value.node, child2)
 	}
 
 	func testPrefixNodes() throws {
@@ -202,8 +206,8 @@ final class TreeTest: XCTestCase {
 
 		root.children = [child1, child2]
 
-		XCTAssertIdentical(root.body.prefixArg.node, child1)
-		XCTAssertIdentical(root.body.args[0].node, child2)
+		XCTAssertIdentical(root.body.instance.prefixArg.node, child1)
+		XCTAssertIdentical(root.body.instance.args[0].node, child2)
 		XCTAssertIdentical(root, child1.parent)
 		XCTAssertIdentical(root, child2.parent)
 		XCTAssertIdentical(root, child1.root)
@@ -223,23 +227,23 @@ final class TreeTest: XCTestCase {
 
 		root.children = [child1, child2, child3, child4, child5]
 
-		XCTAssertEqual(root.body.parts.nodeList.count, 5)
-		XCTAssertIdentical(root.body.parts.nodeList[3], child4)
+		XCTAssertEqual(root.body.instance.value.count, 5)
+		XCTAssertIdentical(root.body.instance.value[3].node, child4)
 		XCTAssertIdentical(root, child2.parent)
 		XCTAssertIdentical(root, child5.root)
 
 		root.children.append(child6)
 
-		XCTAssertIdentical(root.body.parts.nodeList.last, child6)
+		XCTAssertIdentical(root.body.instance.value.last?.node, child6)
 	}
 
 	func testSetNode() throws {
 		let root = Node.expression()
 		let child = Node.expression()
 
-		root.body.expr.node = child
+		root.body.instance.value.node = child
 
-		XCTAssertIdentical(root.body.expr.node, child)
+		XCTAssertIdentical(root.body.instance.value.node, child)
 		XCTAssertIdentical(root, child.parent)
 		XCTAssertIdentical(root, child.root)
 	}
@@ -248,7 +252,7 @@ final class TreeTest: XCTestCase {
 		let root = Node.expression()
 		let child = Node.expression()
 
-		root.body.expr.node = child
+		root.body.instance.value.node = child
 		root.variables.set("x", to: .number(1))
 
 		XCTAssertEqual(root.variables.get("x"), .number(1))
@@ -332,13 +336,13 @@ final class TreeTest: XCTestCase {
 		XCTAssertEqual(var3.returnType, .number)
 
 		root.variables.set("x", to: .number(3))
-		root.body.expr.node = add
-		add.body.parts.nodeList = [Node.empty()]
-		add.body.parts.nodeList.last?.replaceSelf(with: var1)
+		root.body.instance.value.node = add
+		add.body.instance.value = [Node.empty()].map(AnyNode.init)
+		add.body.instance.value.last?.node.replaceSelf(with: var1)
 
 		XCTAssertEqual(root.returnType, .number)
 
-		add.body.parts.nodeList.append(var2)
+		add.body.instance.value.append(AnyNode(var2))
 		root.variables.set("y", to: .number(6))
 
 		XCTAssertEqual(root.returnType, .number)
@@ -348,7 +352,7 @@ final class TreeTest: XCTestCase {
 
 		XCTAssertEqual(root.returnType, .list(.number))
 
-		add.body.parts.nodeList += [var3]
+		add.body.instance.value += [var3].map(AnyNode.init)
 
 		XCTAssertEqual(root.returnType, .number)
 	}
@@ -388,7 +392,7 @@ final class TreeTest: XCTestCase {
 
 		let allVars = parser.root.findNodes(with: Operator.Variable.self)
 		for node in allVars {
-			debugPrint(node, node.returnType, node.variables.isDeclared(node.body.name))
+			debugPrint(node, node.returnType, node.variables.isDeclared(node.body.instance.value))
 
 			try? node.evaluate().cast(to: Type.Number.self)
 		}
@@ -398,13 +402,13 @@ final class TreeTest: XCTestCase {
 		let parser = makeParser()
 		try parser.parse(expression: "1+2")
 
-		XCTAssertEqual((parser.current?.body as? Operator.Number)?.numberString, "2")
+		XCTAssertEqual((parser.current?.body as? Operator.Number)?.instance.numberString, "2")
 
 		parser.erase()
 		try parser.parse(token: "<-")
 
-		XCTAssertEqual((parser.current?.body as? Operator.Number)?.numberString, "1")
-		XCTAssert((parser.root.body as! Operator.Expression).expr.node.body is Operator.Number)		
+		XCTAssertEqual((parser.current?.body as? Operator.Number)?.instance.numberString, "1")
+		XCTAssert((parser.root.body as! Operator.Expression).instance.value.node.body is Operator.Number)		
 	}
 
 }

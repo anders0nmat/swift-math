@@ -5,7 +5,7 @@ import Foundation
 public enum Operator {}
 
 public extension Operator {
-	static var allOperators: [AnyEvaluable] {
+	static var allOperators: [any ContextEvaluable] {
 		builtins +
 		basicArithmetic +
 		advancedArithmetic +
@@ -15,7 +15,10 @@ public extension Operator {
 	}
 
 
-	static var builtins: [AnyEvaluable] { [
+	static var builtins: [any ContextEvaluable] { [
+		Empty(),
+		Expression(),
+
 		Number(0),
 		List(),
 
@@ -23,7 +26,7 @@ public extension Operator {
 		Identifier(""),
 	] }
 
-	static var basicArithmetic: [AnyEvaluable] { [
+	static var basicArithmetic: [any ContextEvaluable] { [
 		Infix(priority: 10, identifier: "+", functions: addFunctions),
 		Infix(priority: 11, identifier: "-", functions: subtractFunctions),
 		Infix(priority: 40, identifier: "*", functions: multiplyFunctions),
@@ -31,22 +34,22 @@ public extension Operator {
 		Parenthesis()
 	] }
 
-	static var advancedArithmetic: [AnyEvaluable] { [
+	static var advancedArithmetic: [any ContextEvaluable] { [
 		Exponent()
 	] }
 
-	static var constants: [AnyEvaluable] { [
+	static var constants: [any ContextEvaluable] { [
 		Constant(Type.Number.pi, displayName: "π", identifier: "pi"),
 		Constant(exp(1), displayName: "e", identifier: "e"),
 	] }
 
-	static var trigonometry: [AnyEvaluable] { [
+	static var trigonometry: [any ContextEvaluable] { [
 		Function(identifier: "sin", function: sin),
 		Function(identifier: "cos", function: cos),
 		Function(identifier: "tan", function: tan),
 	] }
 
-	static var listManipulation: [AnyEvaluable] { [
+	static var listManipulation: [any ContextEvaluable] { [
 		PrefixFunction(identifier: "at") {
 			(arr: [Type._0], num: Type.Number) in
 			let idx = try num.asInt()

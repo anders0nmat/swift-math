@@ -1,9 +1,15 @@
 
-public typealias AnyEvaluable = any ContextEvaluable
+//public typealias AnyEvaluable = any ContextEvaluable
 
 public protocol ContextEvaluable {
 	typealias ArgumentPath = ArgumentContainer<Self>
+	typealias ArgumentInfo = ArgumentDetail<Self>
+
+	associatedtype Storage: Codable = EmptyStorage
+	var instance: Storage { get set }
+	
 	var arguments: ArgumentPath { get }
+	var argumentInfo: ArgumentInfo { get }
 
 	/*
 	Unique identifier for this operation
@@ -34,27 +40,35 @@ public protocol ContextEvaluable {
 
 public extension ContextEvaluable {
 	var arguments: ArgumentPath { ArgumentPath() }
+	var argumentInfo: ArgumentInfo { ArgumentInfo([:]) }
 
 	mutating func customize(using arguments: [String]) -> Bool { true }
 
 	mutating func resetArguments() {
 		if let prefixPath = arguments.prefixPath {
-			self[keyPath: prefixPath].node = Node.empty()
+			self.instance[keyPath: prefixPath].node = Node.empty()
 		}
 		arguments.argumentsPath.forEach {
-			self[keyPath: $0].node = Node.empty()
+			self.instance[keyPath: $0].node = Node.empty()
 		}
 
 		if let restPath = arguments.restPath {
-			self[keyPath: restPath].nodeList = []
+			self.instance[keyPath: restPath] = []
 		}
 	}
 	
-	func makeNode() -> AnyNode { Node(self) }
+	func makeNode() -> any NodeProtocol { Node(self) }
 
 	func evaluateType(in context: Node<Self>) -> MathType? { nil }
 
 	mutating func childrenChanged() {}
 	mutating func contextChanged() {}	
+}
+
+public extension ContextEvaluable where Storage == EmptyStorage {
+	var instance: Storage {
+		get { Storage() }
+		set {}
+	}
 }
 
