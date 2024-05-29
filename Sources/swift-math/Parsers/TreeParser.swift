@@ -21,10 +21,6 @@ public final class TreeParser {
 
 	public internal(set) var operators: [String : any ContextEvaluable]
 
-	public var tokenAdvance = Token("->")
-	public var tokenDeadvance = Token("<-")
-	public var tokenErase = Token("erase")
-
 	public init(operators: [String : any ContextEvaluable]) {
 		self.root = Node.expression()
 		self.current = self.root.children.first
@@ -32,7 +28,27 @@ public final class TreeParser {
 	}
 
 	public convenience init(operators: [any ContextEvaluable] = []) {
-		self.init(operators: Dictionary(operators.map {($0.identifier, $0)}, uniquingKeysWith: { a, _ in a }))
+		self.init(operators: Self.expandOperatorArray(operators))
+	}
+
+	public init(from decoder: any Decoder) throws {
+		guard let operators = decoder.userInfo[.mathOperators] as? [String : any ContextEvaluable] else {
+			throw AnyNode.DecodingError.operatorContextMissing
+		}
+		self.operators = operators
+		let container = try decoder.container(keyedBy: CodingKeys.self)
+
+		let anyRoot = try container.decode(AnyNode.self, forKey: .root)
+		self.root = anyRoot.node
+
+		let currentPath = try container.decode([Array<any NodeProtocol>.Index].self, forKey: .currentPath)
+		var current = self.root
+		for nextIdx in currentPath {
+			let children = current.children
+			guard children.indices.contains(nextIdx) else { break }
+			current = children[nextIdx]
+		}
+		self.current = current
 	}
 
 	public func add(name: String, operator op: any ContextEvaluable) {
@@ -109,6 +125,10 @@ public final class TreeParser {
 				root: self.root,
 				current: self.current)
 		}
+	}
+
+	public static func expandOperatorArray(_ operators: [any ContextEvaluable]) -> [String : any ContextEvaluable] {
+		Dictionary(operators.map {($0.identifier, $0)}, uniquingKeysWith: { a, _ in a })
 	}
 
 
@@ -399,13 +419,50 @@ public final class TreeParser {
 		guard let current else { throw ParseError.noHead }
 
 		switch token {
-			case tokenAdvance: self.current = nextChild(of: current)
-			case tokenDeadvance: self.current = prevChild(of: current)
-			case tokenErase: erase()
+			case .advance: self.current = nextChild(of: current)
+			case .deadvance: self.current = prevChild(of: current)
+			case .erase: erase()
 			default: return false
 		}
 		return true
 	}
+}
+
+extension TreeParser: Codable {
+	internal enum CodingKeys: String, CodingKey {
+		case root
+		case currentPath
+	}
+
+
+	public func encode(to encoder: any Encoder) throws {
+		var container = encoder.container(keyedBy: CodingKeys.self)
+		try container.encode(AnyNode(self.root), forKey: .root)
+
+		guard var current = self.current else {
+			try container.encode([Array<any NodeProtocol>.Index](), forKey: .currentPath)
+			return
+		}
+		var currentPath = [Array<any NodeProtocol>.Index]()
+		while current !== self.root {
+			if let thisIdx = current.parent?.children.firstIndex(of: current) {
+				currentPath.append(thisIdx)
+				current = current.parent!
+			}
+			else {
+				currentPath = []
+				current = current.parent ?? self.root
+			}
+		}
+		currentPath.reverse()
+		try container.encode(currentPath, forKey: .currentPath)
+	}
+}
+
+public extension TreeParser.Token {
+	static var advance = Self("->")
+	static var deadvance = Self("<-")
+	static var erase = Self("erase")
 }
 
 

@@ -17,6 +17,22 @@ public extension NodeProtocol {
 	var argumentNodes: [any NodeProtocol] { argumentPath.map { body.instance[keyPath: $0].node } }
 	var restNodes: [any NodeProtocol]? { restPath.map { body.instance[keyPath: $0] }?.map(\.node) }
 
+	var prefixArgument: (any NodeProtocol, ArgumentData?)? {
+		prefixPath.map {
+			(body.instance[keyPath: $0].node, body.argumentInfo.data(for: $0))
+		}
+	}
+	var arguments: [(any NodeProtocol, ArgumentData?)] {
+		argumentPath.map {
+			(body.instance[keyPath: $0].node, body.argumentInfo.data(for: $0))
+		}
+	}
+	var restArgument: ([any NodeProtocol], ArgumentListData?)? {
+		restPath.map {
+			(body.instance[keyPath: $0].map(\.node), body.argumentInfo.data(for: $0))
+		}
+	}
+
 	var prefixPath: ArgumentKey<Body>? { body.arguments.prefixPath }
 	var argumentPath: [ArgumentKey<Body>] { body.arguments.argumentsPath }
 	var restPath: ArgumentListKey<Body>? { body.arguments.restPath }

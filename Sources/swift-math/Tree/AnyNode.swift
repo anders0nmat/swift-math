@@ -26,6 +26,12 @@ fileprivate extension ContextEvaluable {
 	}
 }
 
+fileprivate extension NodeProtocol {
+	func decodeInstance(from decoder: any Decoder) throws {
+		try self.body.decodeInstance(from: decoder)
+	}
+}
+
 public extension CodingUserInfoKey {
 	static let mathOperators = Self(rawValue: "swift_math.AnyNode.operators")!
 	static let mathParser = Self(rawValue: "swift_math.AnyNode.parser")!
@@ -49,13 +55,18 @@ extension AnyNode: Codable {
 		}
 		let container = try decoder.container(keyedBy: AnyNodeKeys.self)
 		let identifier = try container.decode(String.self, forKey: .identifier)
-		guard var op = operators[identifier] else {
+		guard let op = operators[identifier] else {
 			throw DecodingError.unknownOperator(identifier: identifier)
 		}
-		if !(op.instance is EmptyStorage) {
-			try op.decodeInstance(from: container.superDecoder(forKey: .body))
-		}
+
+		// Careful with the order of the following operations. 
+		// decodeInstance() triggers the set-handler on Node.body which assigns .parent,
+		// updates .returnType and propagates the childrenChanged().
+		// We want this in order to correctly signal and set up parent/children nodes.
 		self.init(op.makeNode())
+		if !(op.instance is EmptyStorage) {
+			try self.node.decodeInstance(from: container.superDecoder(forKey: .body))
+		}
 
 		guard let parser = decoder.userInfo[.mathParser] as? TreeParser else { return }
 

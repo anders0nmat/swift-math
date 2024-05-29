@@ -26,6 +26,14 @@ public struct ArgumentDetail<T: ContextEvaluable> {
 	public func contains(_ argument: ArgumentListKey<T>) -> Bool {
 		restArgumentInfo.keys.contains(argument)
 	}
+
+	public func data(for argument: ArgumentKey<T>) -> ArgumentData? {
+		argumentInfo[argument]
+	}
+
+	public func data(for argument: ArgumentListKey<T>) -> ArgumentListData? {
+		restArgumentInfo[argument]
+	}
 }
 
 /*

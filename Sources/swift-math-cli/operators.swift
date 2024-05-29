@@ -2,7 +2,7 @@ import swift_math
 import Foundation
 
 
-let operators: [any ContextEvaluable] = 
+let operators = TreeParser.expandOperatorArray(
 	Operator.builtins +
 	Operator.basicArithmetic +
 	Operator.advancedArithmetic +
@@ -14,3 +14,4 @@ let operators: [any ContextEvaluable] =
 	Operator.Function(identifier: "exp", function: exp),
 	Operator.Iterate(identifier: "sum", initialValue: .number(0), functions: Operator.addFunctions),
 	]
+)

@@ -9,7 +9,7 @@ var clearScreen = true
 var lastResult = ""
 var events = [String]()
 
-let parser = TreeParser(operators: operators)
+var parser = TreeParser(operators: operators)
 //let printer = NodePrinter()
 let commands: [Command] = [
 	Command(["q", "quit"], description: "Quits the application") {
@@ -80,7 +80,12 @@ let commands: [Command] = [
 	},
 	Command(["save"], description: "Save current expression to file <arg>") { path in 
 		let url = URL(fileURLWithPath: path)
-		try parser.save(prettyPrint: true).write(to: url)
+		//try parser.save(prettyPrint: true).write(to: url)
+		let encoder = JSONEncoder()
+		encoder.outputFormatting = .prettyPrinted
+		let data = try encoder.encode(parser)
+		try data.write(to: url)
+
 		lastResult = "Success! saved to \(url)".colored(.green)
 		
 		
@@ -91,7 +96,13 @@ let commands: [Command] = [
 	},
 	Command(["load"], description: "Load expression in file <arg>") { path in 
 		let url = URL(fileURLWithPath: path)
-		try parser.load(from: Data(contentsOf: url))
+		//try parser.load(from: Data(contentsOf: url))
+		let decoder = JSONDecoder()
+		decoder.userInfo[.mathOperators] = operators
+		let data = try Data(contentsOf: url)
+		let globals = parser.root.variables.export()
+		parser = try decoder.decode(TreeParser.self, from: data)
+		parser.root.variables.import(globals)
 		lastResult = "Success! Loaded from \(url)".colored(.green)
 		
 		/*let decoder = JSONDecoder()
