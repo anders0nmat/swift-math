@@ -43,7 +43,7 @@ fileprivate extension NodeProtocol {
 	}
 }
 
-internal extension CodingUserInfoKey {
+public extension CodingUserInfoKey {
 	static let mathOperators = Self(rawValue: "swift_math.AnyNode.operators")!
 	static let mathParser = Self(rawValue: "swift_math.AnyNode.parser")!
 }

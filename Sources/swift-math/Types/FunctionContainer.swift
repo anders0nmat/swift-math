@@ -81,7 +81,7 @@ public final class FunctionContainer {
 	}*/
 
 	public func evaluate(_ nodes: [AnyNode]) throws -> MathValue {
-		return try evaluate(nodes.map(\.node))
+		return try evaluate(nodes.map { try $0.evaluate() })
 	}
 
 	/*internal func evaluate(_ nodes: [any NodeProtocol]) throws -> MathValue {

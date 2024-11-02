@@ -50,18 +50,15 @@ public final class Node<Body: ContextEvaluable>: NodeProtocol {
 		}
 	}
 
-	private var _variables: VariableContainer!
-	public var variables: VariableContainer { 
-		get { _variables }
-		set { _variables = newValue }
-	}
+	public var variables: VariableContainer!
 
 	public private(set) var returnType: MathType?
 
 	public init(_ body: Body, parent: (any NodeProtocol)? = nil) {
 		self.parent = parent
 		self._body = body
-		self._variables = VariableContainer(owner: self)
+		
+		self.variables = VariableContainer(owner: self)
 		self.returnType = _body.evaluateType(in: self)
 		linkChildren()
 	}

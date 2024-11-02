@@ -13,8 +13,8 @@ public protocol FunctionEvaluable: ContextEvaluable {
 }
 
 public extension FunctionEvaluable {
-	fileprivate var allArguments: [any NodeProtocol] {
-		self.arguments.argumentsPath.map { self.instance[keyPath: $0].node }
+	fileprivate var allArguments: [AnyNode] {
+		self.arguments.argumentsPath.map { self.instance[keyPath: $0] }
 	}
 
 	func evaluate(in context: Node<Self>) throws -> MathValue {
