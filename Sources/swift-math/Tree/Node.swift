@@ -1,30 +1,13 @@
 
-/*public protocol _Node: AnyObject {
-	associatedtype Body: ContextEvaluable
+/**
+	Container for Operators. Stored in a tree structure
 
-	var parent: AnyNode? { get set }
-	var root: AnyNode { get }
-
-	var body: Body { get set }
-	var children: [AnyNode] { get set }
-
-	var observers: [NodeEventCallback] { get set }
-
-	var variables: VariableContainer { get }
-
-	var returnType: MathType? { get }
-
-	func evaluate() throws -> MathValue
-
-	func replace(child node: AnyNode, with new: AnyNode)
-	func replaceSelf(with new: AnyNode)
-
-	func childrenChanged()
-	func contextChanged()
-}*/
-
-//public typealias AnyNode = any _Node
-
+	Allows for composition of operators, aswell as
+	providing behavior for interaction with and between operators.
+	Manages updates to the tree and optionally notifies observers.
+	Accessing any Operator in a syntax tree should happen through its `Node`-object
+	to allow for correct signalling- and linking behavior.
+*/
 public final class Node<Body: ContextEvaluable>: NodeProtocol {
 	public weak var parent: (any NodeProtocol)?
 	public var root: any NodeProtocol { parent?.root ?? self }

@@ -1,46 +1,60 @@
 
 public final class VariableContainer {
-	private var variables: [String: MathValue]
-	private var variableTypes: [String: MathType?]
+	private struct Variable {
+		var type: MathType?
+		var value: MathValue?
+
+		init(_ value: MathValue) {
+			self.value = value
+			self.type = value.type
+		}
+
+		init(type: MathType?) {
+			self.value = nil
+			self.type = type
+		}
+	}
+
+	private var variables: [String: Variable] = [:]
 	private unowned var owner: any NodeProtocol
 
-	public init(owner: any NodeProtocol) {
-		self.variables = [:]
-		self.variableTypes = [:]
+	internal init(owner: any NodeProtocol) {
 		self.owner = owner
 	}
 
-	private func setType(_ name: String, type: MathType?) {
-		let oldType = variableTypes.updateValue(type, forKey: name)
-		if oldType != type {
-			owner.contextChanged()
+	private func setVariable(_ name: String, variable: Variable) {
+		switch (variables.keys.contains(name), variables[name]?.type == variable.type, variable.value != nil) {
+			case (false, _, _), (true, false, _):
+				variables[name] = variable
+				owner.contextChanged()
+			case (true, true, false):
+				return
+			case (true, true, true):
+				variables[name] = variable
 		}
 	}
 
-	/*
-	Declares a new variable with an optional type. Does not yet assign a value.
-	If a value is already present, it is deleted if the type is different to `type`
+	/**
+		Declares a new variable with an optional type.
+		
+		Does not yet assign a value. If a value is already present, it is deleted if the type is different to `type`
 	*/
 	public func declare(_ name: String, type: MathType?) {
-		setType(name, type: type)
-		if variables[name]?.type != type {
-			variables.removeValue(forKey: name)
-		}
+		setVariable(name, variable: .init(type: type))
 	}
 
 	/*
 	Indicates if variable is known in scope
 	*/
 	public func isDeclared(_ name: String) -> Bool {
-		variableTypes.keys.contains(name)
+		variables.keys.contains(name)
 	}
 
 	/*
 	Sets a variable to a value in the current scope. Automatically calls declare()
 	*/
 	public func set(_ name: String, to value: MathValue) {
-		setType(name, type: value.type)
-		variables[name] = value
+		setVariable(name, variable: .init(value))
 	}
 
 	/*
@@ -48,24 +62,26 @@ public final class VariableContainer {
 	Walks the scope chain if necessary
 	*/
 	public func get(_ name: String) -> MathValue? {
-		variables[name] ?? owner.parent?.variables.get(name)
+		if let v = variables[name] {
+			return v.value
+		}
+		return owner.parent?.variables.get(name)
 	}
 
 	/*
 	Deletes a declared/defined variable in the current scope
 	*/
 	public func delete(_ name: String) {
-		if let _ = variableTypes.removeValue(forKey: name) {
+		if let _ = variables.removeValue(forKey: name) {
 			owner.contextChanged()
 		}
-		deleteValue(name)
 	}
 
 	/*
 	Removes the value but keeps the declaration
 	*/
 	public func deleteValue(_ name: String) {
-		variables.removeValue(forKey: name)
+		variables[name]?.value = nil
 	}
 
 	/*
@@ -73,22 +89,17 @@ public final class VariableContainer {
 	*/
 	public func clear() {
 		variables = [:]
-		variableTypes = [:]
 		owner.contextChanged()
-	}
-
-	/*
-	Clears all values but keeps declarations
-	*/
-	public func clearValues() {
-		variables = [:]
 	}
 
 	/*
 	Retrieves any type information about a variable if available
 	*/
 	public func getType(_ name: String) -> MathType? {
-		variableTypes[name] ?? owner.parent?.variables.getType(name)
+		if let v = variables[name] {
+			return v.type
+		}
+		return owner.parent?.variables.getType(name)
 	}
 
 	/*
@@ -96,8 +107,8 @@ public final class VariableContainer {
 	Hides shadowed variables. Results start with current scope.
 	*/
 	public func listDeclared() -> [String] {
-		var namesSet = Set(variableTypes.keys)
-		var names = Array(variableTypes.keys)
+		var namesSet = Set(variables.keys)
+		var names = Array(variables.keys)
 
 		let parentVariables = owner.parent?.variables.listDeclared().filter({ !namesSet.contains($0) }) ?? []
 		namesSet.formUnion(parentVariables)
@@ -106,7 +117,7 @@ public final class VariableContainer {
 		return names
 	}
 
-	public func export() -> [String: MathValue] { variables	}
+	public func export() -> [String: MathValue] { variables.compactMapValues(\.value) }
 
 	public func `import`(_ values: [String: MathValue]) {
 		for (k, v) in values {

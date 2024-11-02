@@ -81,3 +81,8 @@ extension Operator.Exponent: CustomDisplayable {
 	var debugDisplayProperties: String { "" }
 }
 
+extension Operator.Divide: CustomDisplayable {
+	var displayString: String { "(\(instance.divident.node.displayString)) / (\(instance.divisor.node.displayString))" }
+	var debugDisplayProperties: String { "" }
+}
+

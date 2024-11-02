@@ -1,12 +1,28 @@
 
+/**
+	Holds additional information about an operator argument
+
+	May be used for UI-related information like display names.
+*/
 public struct ArgumentData {
 	var name: String
 }
 
+/**
+	Holds information about an operator vararg-argument
+
+	May be used for UI-related information like display names
+*/
 public struct ArgumentListData {
 	var nameGenerator: (Array.Index) -> String
 }
 
+/**
+	Provides further information linked to arguments of an operator
+
+	Holds further information for arguments of an operation, indexed by their
+	KeyPath.
+*/
 public struct ArgumentDetail<T: ContextEvaluable> {
 	private var argumentInfo: [ArgumentKey<T> : ArgumentData]
 	private var restArgumentInfo: [ArgumentListKey<T> : ArgumentListData]

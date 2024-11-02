@@ -7,8 +7,8 @@ public extension Operator {
 		}
 
 		public struct Storage: Codable {
-			var divident = AnyNode()
-			var divisor = AnyNode()
+			public var divident = AnyNode()
+			public var divisor = AnyNode()
 		}
 		public var instance = Storage()
 

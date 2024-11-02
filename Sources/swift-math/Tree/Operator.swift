@@ -1,7 +1,11 @@
 
 import Foundation
 
-// Namespace for all operators
+/**
+	Namespace for all operators
+
+	Contains all operator definitions aswell as collections of operators
+*/
 public enum Operator {}
 
 public extension Operator {

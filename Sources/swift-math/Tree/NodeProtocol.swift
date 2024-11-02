@@ -10,7 +10,7 @@ public protocol NodeProtocol: AnyObject {
 
 	var observers: [NodeEventCallback] { get set }
 
-	var variables: VariableContainer { get }
+	var variables: VariableContainer! { get }
 
 	var returnType: MathType? { get }
 

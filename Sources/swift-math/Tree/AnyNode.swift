@@ -1,5 +1,14 @@
 
+/**
+	Type-erasing Container for Nodes, providing codable conformance
 
+	This type serves as glue between nodes in the syntax tree, allowing for Codable conformance.
+
+	`Node<Body: ContextEvaluable>` cannot conform to Codable because of the `init(from decoder:)` requirement
+	which would need `Body` to be known before decoding. This type defers that by taking a en-/decoder context
+	for looking up concrete Operators from the `identifier`-Key.
+	This Type is used everywhere a node is expected from the user (e.g. arguments to a function).
+*/
 public struct AnyNode {
 	public internal(set) var node: any NodeProtocol
 
@@ -15,6 +24,8 @@ public struct AnyNode {
 		guard let node else { return nil }
 		self.node = node
 	}
+
+	public var variables: VariableContainer { node.variables }
 
 	public var returnType: MathType? { node.returnType }
 	public func evaluate() throws -> MathValue { try node.evaluate() }
@@ -32,7 +43,7 @@ fileprivate extension NodeProtocol {
 	}
 }
 
-public extension CodingUserInfoKey {
+internal extension CodingUserInfoKey {
 	static let mathOperators = Self(rawValue: "swift_math.AnyNode.operators")!
 	static let mathParser = Self(rawValue: "swift_math.AnyNode.parser")!
 }

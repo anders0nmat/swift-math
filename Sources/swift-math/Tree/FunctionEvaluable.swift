@@ -1,5 +1,14 @@
 
+/**
+	Generic Operator definition for overloadable native functions
+
+	Allows for quick definition of overloadable functions through a `FunctionContainer`.
+	Default implementation provided for the `Evaluable`-Protocol
+*/
 public protocol FunctionEvaluable: ContextEvaluable {
+	/**
+		Contains all function overloads for the operator
+	*/
 	static var functions: FunctionContainer { get set }
 }
 

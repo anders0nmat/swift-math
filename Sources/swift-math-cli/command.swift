@@ -65,11 +65,14 @@ struct Command {
 				}
 				s2 += String(repeating: " ", count: diff)
 				s += s2
-				result.append(s)
 			}
+			else {
+				s += String(repeating: " ", count: columnWidth)
+			}
+			result.append(s)
 		}
 
-		if !description.isEmpty {
+		if !description.isEmpty && !result.isEmpty {
 			var last = result.last!
 			let descDiff = 2 * columnWidth - last.count
 			last += String(repeating: " ", count: descDiff)

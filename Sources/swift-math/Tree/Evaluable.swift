@@ -1,13 +1,18 @@
 
+/**
+	Base protocol for any operator that does not require context information
+*/
 public protocol Evaluable: ContextEvaluable {
-	/*
-	Function to call if evaluation is requested.
-	Returns math-value or error
+	/**
+		Evaluate the result of this Operator
 	*/
 	func evaluate() throws -> MathValue
 
-	/*
-	Indicates the return type of evaluate() or `nil` if unknown
+	/**
+		Evaluate the type of the result of this Operator
+
+		Used for type inference of some operators.
+		`nil` can be returned to indicate that the type can not be known until evaluation through `evaluate()`
 	*/
 	func evaluateType() -> MathType?
 }

@@ -84,9 +84,9 @@ public final class FunctionContainer {
 		return try evaluate(nodes.map(\.node))
 	}
 
-	public func evaluate(_ nodes: [any NodeProtocol]) throws -> MathValue {
+	/*internal func evaluate(_ nodes: [any NodeProtocol]) throws -> MathValue {
 		return try evaluate(nodes.map { try $0.evaluate() })
-	}
+	}*/
 
 	public func evaluate(_ values: [MathValue]) throws -> MathValue {
 		let signature = values.map(\.type)
@@ -106,9 +106,9 @@ public final class FunctionContainer {
 		evaluateType(nodes.map(\.returnType))
 	}
 
-	public func evaluateType(_ nodes: [any NodeProtocol]) -> MathType? {
+	/*internal func evaluateType(_ nodes: [any NodeProtocol]) -> MathType? {
 		evaluateType(nodes.map({ $0.returnType }))
-	}
+	}*/
 
 	public func evaluateType(_ values: [MathType?]) -> MathType? {
 		let signature = values

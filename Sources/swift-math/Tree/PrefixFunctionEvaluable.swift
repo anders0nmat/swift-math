@@ -4,9 +4,9 @@ public protocol PrefixFunctionEvaluable: ContextEvaluable {
 }
 
 public extension PrefixFunctionEvaluable {
-	fileprivate var allArguments: [any NodeProtocol] {
-		[self.instance[keyPath: self.arguments.prefixPath!].node] + 
-		self.arguments.argumentsPath.map { self.instance[keyPath: $0].node }
+	fileprivate var allArguments: [AnyNode] {
+		[self.instance[keyPath: self.arguments.prefixPath!]] + 
+		self.arguments.argumentsPath.map { self.instance[keyPath: $0] }
 	}
 
 	func evaluate(in context: Node<Self>) throws -> MathValue {
